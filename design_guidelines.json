@@ -1,0 +1,157 @@
+{
+  "app_name": "DiCo App",
+  "personality": "1 iOS-Native Clean",
+  "personality_one_liner": "A highly legible, professional field-service tool that instills trust and operational clarity on the job site.",
+  "color": {
+    "surface": "#F9F9F8",
+    "onSurface": "#1C1C1A",
+    "surfaceSecondary": "#FFFFFF",
+    "onSurfaceSecondary": "#1C1C1A",
+    "surfaceTertiary": "#F0F0EE",
+    "onSurfaceTertiary": "#1C1C1A",
+    "surfaceInverse": "#1C1C1A",
+    "onSurfaceInverse": "#F9F9F8",
+    "brand": "#C54B3C",
+    "onBrand": "#FFFFFF",
+    "brandPrimary": "#C54B3C",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#D87D71",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#F5DFDC",
+    "onBrandTertiary": "#C54B3C",
+    "success": "#3E8351",
+    "onSuccess": "#FFFFFF",
+    "warning": "#D19F30",
+    "onWarning": "#FFFFFF",
+    "error": "#B33A3A",
+    "onError": "#FFFFFF",
+    "info": "#4A4A45",
+    "onInfo": "#FFFFFF",
+    "border": "#E3E3E0",
+    "borderStrong": "#B8B8B5",
+    "divider": "#E3E3E0",
+    "muted": "#73736D"
+  },
+  "typography": {
+    "displayFontFamily": "Plus Jakarta Sans",
+    "textFontFamily": "Plus Jakarta Sans",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous spacing and fat-finger accessibility (minimum 44x44pt tap targets) for field technicians. Ensure comfortable vertical rhythm inside form flows.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": 1,
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Bottom tab bar",
+      "Sticky footer container for Next/Submit buttons in the form wizards",
+      "Modal scrim entry/exit"
+    ],
+    "dont's": [
+      "Every button",
+      "List rows",
+      "Form inputs",
+      "Dense data screens"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Auth",
+      "purpose": "Login flow prioritizing Google SSO and Email/Password.",
+      "states": {
+        "loading": "Spinner over brand colored button.",
+        "empty": "N/A",
+        "error": "Inline text below the input or a toast."
+      },
+      "layout": "Vertical stack centered in the lower half of the screen. Splash hero image on top half."
+    },
+    {
+      "name": "Dashboard",
+      "purpose": "Overview of recent documents (DiCo/DiRi) and quick actions to create new ones.",
+      "states": {
+        "loading": "Skeleton list items.",
+        "empty": "Illustration of a blueprint/clipboard with a prompt to 'Create your first document'.",
+        "error": "Failed to load documents error state with Retry button."
+      },
+      "layout": "Large pinned header with 'Quick Create' primary actions. Below: a grouped list (surfaceSecondary cards) of Recent Documents with glanceable status badges."
+    },
+    {
+      "name": "Wizard_DiCo",
+      "purpose": "Multi-step form for generating a Declaration of Conformity.",
+      "states": {
+        "loading": "Saving step data...",
+        "empty": "N/A",
+        "error": "Inline validation errors next to specific fields."
+      },
+      "layout": "Single-column layout with 2-5 fields per step. Thin horizontal progress bar at the top ('Step 2 of 5'). Sticky footer container at the bottom with a primary 'Next' button (anchored above the safe area, using glass blur). Use native pickers and large tap targets."
+    },
+    {
+      "name": "Registries (Clients/Installations)",
+      "purpose": "Manage saved client data and installation sites to reuse in future documents.",
+      "states": {
+        "loading": "Skeleton list rows.",
+        "empty": "Empty state illustration with CTA to 'Add Client'.",
+        "error": "Standard error prompt with retry."
+      },
+      "layout": "Search bar at the top. Flat list of cards displaying client/site info. FAB (Floating Action Button) or prominent Top Header button to add new."
+    }
+  ],
+  "images": {
+    "splash_hero": {
+      "url": "https://images.unsplash.com/photo-1754666104638-d814f4baaf88?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHwxfHxodmFjJTIwdG9vbHMlMjBmbGF0JTIwbGF5fGVufDB8fHx8MTc5MTkyMzEzMXww&ixlib=rb-4.1.0&q=85",
+      "alt": "HVAC plumbing tools flat lay for background"
+    },
+    "empty_documents": {
+      "url": "https://images.unsplash.com/photo-1542621334-a254cf47733d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxibHVlcHJpbnQlMjB0ZWNobmljYWwlMjBkcmF3aW5nfGVufDB8fHx8MTc5MTkyMzEzMXww&ixlib=rb-4.1.0&q=85",
+      "alt": "Blueprint technical drawing"
+    },
+    "empty_registries": {
+      "url": "https://images.unsplash.com/photo-1651760680066-db9d32bd0357?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwxfHxjbGlwYm9hcmQlMjBkb2N1bWVudCUyMGZsYXQlMjBsYXl8ZW58MHx8fHwxNzkxOTIzMTMxfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Clipboard document flat lay"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Adopt 'iOS-Native Clean' personality. Keep the app highly legible and functional for field workers. Maintain a professional, clean UI.",
+    "Use the Terracotta (#C54B3C) as the primary brand color representing heat/plumbing. Avoid ALL blues/purples.",
+    "For the Multi-step Wizard (DiCo/DiRi), implement a thin horizontal progress bar at the top.",
+    "Place the primary CTA (Next / Submit) in a sticky footer container at the bottom of the screen (anchored above the safe area) during the form wizard flows. Use expo-blur for this container's background so scrolling content is visible beneath it.",
+    "Ensure all tap targets (buttons, list rows, form fields) are at least 44x44pt (preferably 48pt) to accommodate fat-finger accessibility on job sites.",
+    "Implement inline validation and use native input types (e.g., numeric, email) to trigger the correct keyboards.",
+    "Ensure list rows use brandTertiary tinted rounded squares for feature icons to add visual depth.",
+    "Include haptic feedback on tab changes, primary button presses, and wizard step completions."
+  ]
+}
