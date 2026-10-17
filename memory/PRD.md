@@ -65,6 +65,13 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
     agganciano al bocchello più vicino (snap, soglia 28px) e il punto viene salvato come riferimento
     {sym, port}; render.ts resolveLinePoint risolve i riferimenti, così la linea segue il simbolo
     quando viene spostato/ruotato/ridimensionato. Guide (pallini) visibili in modalità linea.
+- 2026-10-17 (e): Griglia magnetica + etichette schema.
+  - Griglia (GRID=20px) mostrata nel foglio editor con toggle "Griglia"; simboli, etichette e punti
+    liberi delle linee fanno snap alla griglia (lo snap ai bocchelli ha priorità). La griglia è solo
+    aiuto di editing: non compare nel PDF.
+  - Etichette di testo (kind "label"): pulsante "Testo" aggiunge un'etichetta editabile (TextField nel
+    toolbar), con colore, dimensione, trascinamento ed eliminazione; resa nel PDF come testo vettoriale.
+    Toolbar avvolto in KeyboardStickyView per editare il testo sopra la tastiera.
 
 ## Backlog (prioritized)
 - P1: Logo impresa + firma (immagine) nel PDF.

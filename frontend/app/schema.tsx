@@ -2,18 +2,22 @@ import { useRouter } from "expo-router";
 import {
   ArrowClockwise,
   Check,
+  GridFour,
   Minus,
   PencilLine,
   Plus,
+  TextT,
   Trash,
   X,
 } from "phosphor-react-native";
 import { useRef, useState } from "react";
 import { Animated, PanResponder, Platform, Pressable, ScrollView, Text, View } from "react-native";
-import Svg, { Circle, Polyline, Rect, SvgXml } from "react-native-svg";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
+import Svg, { Circle, Line, Polyline, Rect, SvgXml } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { uid } from "@/src/local/db";
+import { TextField } from "@/src/components/ui";
 import { SCHEMA_COLORS, schemaDraft } from "@/src/schema/draft";
 import {
   emptySchema,
@@ -27,9 +31,91 @@ import { PORT_KEYS, SYMBOL_PALETTE, symbolSvg } from "@/src/schema/symbols";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 
 const DEFAULT_SIZE = 48;
+const GRID = 20;
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
+}
+
+function snapTo(v: number, enabled: boolean) {
+  return enabled ? Math.round(v / GRID) * GRID : v;
+}
+
+type LabelEl = Extract<SchemaElement, { kind: "label" }>;
+
+function DraggableLabel({
+  el,
+  selected,
+  draggable,
+  canvas,
+  grid,
+  onSelect,
+  onMove,
+}: {
+  el: LabelEl;
+  selected: boolean;
+  draggable: boolean;
+  canvas: { w: number; h: number };
+  grid: boolean;
+  onSelect: () => void;
+  onMove: (x: number, y: number) => void;
+}) {
+  const { colors } = useTheme();
+  const pan = useRef(new Animated.ValueXY({ x: el.x, y: el.y })).current;
+  const posRef = useRef({ x: el.x, y: el.y });
+  const startRef = useRef({ x: el.x, y: el.y });
+
+  const responder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => draggable,
+      onMoveShouldSetPanResponder: () => draggable,
+      onPanResponderGrant: () => {
+        onSelect();
+        startRef.current = { ...posRef.current };
+      },
+      onPanResponderMove: (_e, g) => {
+        const x = clamp(startRef.current.x + g.dx, 0, canvas.w - 20);
+        const y = clamp(startRef.current.y + g.dy, 0, canvas.h - 20);
+        posRef.current = { x, y };
+        pan.setValue({ x, y });
+      },
+      onPanResponderRelease: () => {
+        const x = snapTo(posRef.current.x, grid);
+        const y = snapTo(posRef.current.y, grid);
+        pan.setValue({ x, y });
+        onMove(x, y);
+      },
+    }),
+  ).current;
+
+  const content = (
+    <Text style={{ color: el.color, fontSize: el.size, fontWeight: "700" }} numberOfLines={1}>
+      {el.text || "Testo"}
+    </Text>
+  );
+
+  const box = {
+    position: "absolute" as const,
+    paddingHorizontal: 2,
+    borderWidth: selected ? 1 : 0,
+    borderColor: colors.brandPrimary,
+    borderStyle: "dashed" as const,
+    borderRadius: 4,
+  };
+
+  if (Platform.OS === "web") {
+    return (
+      <Pressable onPress={onSelect} style={[box, { left: el.x, top: el.y }]}>
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <Animated.View {...responder.panHandlers} style={[box, { transform: [{ translateX: pan.x }, { translateY: pan.y }] }]}>
+      {content}
+    </Animated.View>
+  );
 }
 
 function DraggableSymbol({
@@ -37,6 +123,7 @@ function DraggableSymbol({
   selected,
   draggable,
   canvas,
+  grid,
   onSelect,
   onMove,
 }: {
@@ -44,6 +131,7 @@ function DraggableSymbol({
   selected: boolean;
   draggable: boolean;
   canvas: { w: number; h: number };
+  grid: boolean;
   onSelect: () => void;
   onMove: (x: number, y: number) => void;
 }) {
@@ -66,7 +154,13 @@ function DraggableSymbol({
         posRef.current = { x, y };
         pan.setValue({ x, y });
       },
-      onPanResponderRelease: () => onMove(posRef.current.x, posRef.current.y),
+      onPanResponderRelease: () => {
+        const x = snapTo(posRef.current.x, grid);
+        const y = snapTo(posRef.current.y, grid);
+        posRef.current = { x, y };
+        pan.setValue({ x, y });
+        onMove(x, y);
+      },
     }),
   ).current;
 
@@ -128,6 +222,7 @@ export default function SchemaEditor() {
   const [draftPts, setDraftPts] = useState<{ x: number; y: number; ref?: { sym: string; port: string } }[]>([]);
   const [color, setColor] = useState(SCHEMA_COLORS[0]);
   const [lineW] = useState(5);
+  const [grid, setGrid] = useState(true);
   const canvasRef = useRef(schema.canvas);
 
   const selected = schema.elements.find((e) => e.id === selectedId) || null;
@@ -147,8 +242,8 @@ export default function SchemaEditor() {
       id: uid(),
       kind: "symbol",
       symbol: key,
-      x: clamp(w / 2 - DEFAULT_SIZE / 2 + offset, 0, w - DEFAULT_SIZE),
-      y: clamp(h / 2 - DEFAULT_SIZE / 2 + offset, 0, h - DEFAULT_SIZE),
+      x: snapTo(clamp(w / 2 - DEFAULT_SIZE / 2 + offset, 0, w - DEFAULT_SIZE), grid),
+      y: snapTo(clamp(h / 2 - DEFAULT_SIZE / 2 + offset, 0, h - DEFAULT_SIZE), grid),
       size: DEFAULT_SIZE,
       color,
       rotation: 0,
@@ -157,9 +252,25 @@ export default function SchemaEditor() {
     setSelectedId(el.id);
   };
 
+  const addLabel = () => {
+    const { w, h } = canvasRef.current;
+    const el: SchemaElement = {
+      id: uid(),
+      kind: "label",
+      x: snapTo(w / 2 - 40, grid),
+      y: snapTo(h / 2, grid),
+      text: "Testo",
+      color: "#1C1C1A",
+      size: 18,
+    };
+    mutate((els) => [...els, el]);
+    setSelectedId(el.id);
+  };
+
   const onCanvasTap = (x: number, y: number) => {
     if (lineMode) {
-      setDraftPts((p) => [...p, findSnap(x, y) ?? { x, y }]);
+      const snap = findSnap(x, y);
+      setDraftPts((p) => [...p, snap ?? { x: snapTo(x, grid), y: snapTo(y, grid) }]);
     } else {
       setSelectedId(null);
     }
@@ -212,6 +323,18 @@ export default function SchemaEditor() {
 
   const lines = schema.elements.filter((e) => e.kind === "line") as Extract<SchemaElement, { kind: "line" }>[];
   const symbols = schema.elements.filter((e) => e.kind === "symbol") as Extract<SchemaElement, { kind: "symbol" }>[];
+  const labels = schema.elements.filter((e) => e.kind === "label") as LabelEl[];
+
+  const gridLines: React.ReactNode[] = [];
+  if (grid) {
+    const { w, h } = canvasRef.current;
+    for (let gx = GRID; gx < w; gx += GRID) {
+      gridLines.push(<Line key={`gx${gx}`} x1={gx} y1={0} x2={gx} y2={h} stroke={colors.border} strokeWidth={1} />);
+    }
+    for (let gy = GRID; gy < h; gy += GRID) {
+      gridLines.push(<Line key={`gy${gy}`} x1={0} y1={gy} x2={w} y2={gy} stroke={colors.border} strokeWidth={1} />);
+    }
+  }
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -241,6 +364,7 @@ export default function SchemaEditor() {
             fill={schema.background}
             onPress={Platform.OS === "web" ? undefined : () => setSelectedId(null)}
           />
+          {gridLines}
           {lines.map((l) => {
             const resolved = resolveLine(l.points, schema.elements);
             if (resolved.length < 2) return null;
@@ -312,6 +436,22 @@ export default function SchemaEditor() {
             selected={el.id === selectedId}
             draggable={!lineMode}
             canvas={canvasRef.current}
+            grid={grid}
+            onSelect={() => setSelectedId(el.id)}
+            onMove={(x, y) =>
+              mutate((els) => els.map((e) => (e.id === el.id ? { ...e, x, y } : e)))
+            }
+          />
+        ))}
+
+        {labels.map((el) => (
+          <DraggableLabel
+            key={el.id}
+            el={el}
+            selected={el.id === selectedId}
+            draggable={!lineMode}
+            canvas={canvasRef.current}
+            grid={grid}
             onSelect={() => setSelectedId(el.id)}
             onMove={(x, y) =>
               mutate((els) => els.map((e) => (e.id === el.id ? { ...e, x, y } : e)))
@@ -327,7 +467,8 @@ export default function SchemaEditor() {
       </View>
 
       {/* Bottom toolbar */}
-      <View style={[styles.toolbar, { paddingBottom: insets.bottom + spacing.sm }]}>
+      <KeyboardStickyView>
+        <View style={[styles.toolbar, { paddingBottom: insets.bottom + spacing.sm }]}>
         {selected && selected.kind === "symbol" ? (
           <>
             <Text style={styles.tLabel}>Simbolo selezionato</Text>
@@ -355,6 +496,25 @@ export default function SchemaEditor() {
               </Pressable>
             </View>
           </>
+        ) : selected && selected.kind === "label" ? (
+          <>
+            <Text style={styles.tLabel}>Etichetta</Text>
+            <TextField
+              testID="label-text-input"
+              value={selected.text}
+              onChangeText={(t) => updateSelected({ text: t })}
+              placeholder="es. mandata 70°C"
+            />
+            <Swatches value={selected.color} onPick={(c) => updateSelected({ color: c })} />
+            <View style={styles.actions}>
+              <IconBtn testID="label-smaller" icon={<Minus color={colors.onSurface} size={18} weight="bold" />} onPress={() => updateSelected({ size: clamp((selected.size as number) - 2, 10, 48) })} />
+              <IconBtn testID="label-bigger" icon={<Plus color={colors.onSurface} size={18} weight="bold" />} onPress={() => updateSelected({ size: clamp((selected.size as number) + 2, 10, 48) })} />
+              <IconBtn testID="label-delete" danger icon={<Trash color={colors.onError} size={18} weight="bold" />} onPress={deleteSelected} />
+              <Pressable testID="label-done" style={styles.doneBtn} onPress={() => setSelectedId(null)}>
+                <Text style={styles.doneText}>Fine</Text>
+              </Pressable>
+            </View>
+          </>
         ) : lineMode ? (
           <>
             <Text style={styles.tLabel}>Tocca il foglio per aggiungere punti ({draftPts.length})</Text>
@@ -376,8 +536,16 @@ export default function SchemaEditor() {
                 <PencilLine color={colors.onBrandPrimary} size={18} weight="bold" />
                 <Text style={styles.lineBtnText}>Linea</Text>
               </Pressable>
-              <Swatches value={color} onPick={setColor} />
+              <Pressable testID="add-label" style={styles.secBtn} onPress={addLabel}>
+                <TextT color={colors.onSurface} size={18} weight="bold" />
+                <Text style={styles.secText}>Testo</Text>
+              </Pressable>
+              <Pressable testID="toggle-grid" style={[styles.secBtn, grid && styles.secActive]} onPress={() => setGrid((g) => !g)}>
+                <GridFour color={grid ? colors.onBrandPrimary : colors.onSurface} size={18} weight="bold" />
+                <Text style={[styles.secText, grid && styles.secTextActive]}>Griglia</Text>
+              </Pressable>
             </View>
+            <Swatches value={color} onPick={setColor} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.palette}>
               {SYMBOL_PALETTE.map((s) => (
                 <Pressable key={s.key} testID={`add-symbol-${s.key}`} style={styles.palItem} onPress={() => addSymbol(s.key)}>
@@ -388,7 +556,8 @@ export default function SchemaEditor() {
             </ScrollView>
           </>
         )}
-      </View>
+        </View>
+      </KeyboardStickyView>
     </View>
   );
 }
@@ -465,6 +634,18 @@ const useStyles = makeStyles((colors) => ({
     borderRadius: radius.md,
   },
   lineBtnText: { color: colors.onBrandPrimary, fontWeight: "700", fontSize: 14 },
+  secBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: colors.surfaceTertiary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+  },
+  secActive: { backgroundColor: colors.brandPrimary },
+  secText: { color: colors.onSurface, fontWeight: "700", fontSize: 14 },
+  secTextActive: { color: colors.onBrandPrimary },
   palette: { gap: spacing.md, paddingVertical: spacing.xs, paddingRight: spacing.md },
   palItem: { alignItems: "center", width: 60, gap: 2 },
   palLabel: { fontSize: 10, color: colors.muted, textAlign: "center" },

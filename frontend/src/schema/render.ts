@@ -105,7 +105,7 @@ export function buildSchemaSvg(schema: SchemaT): string {
       );
     } else if (el.kind === "label") {
       parts.push(
-        `<text x="${el.x}" y="${el.y}" fill="${el.color}" font-size="${el.size}" font-family="Helvetica, Arial, sans-serif">${esc(el.text)}</text>`,
+        `<text x="${el.x}" y="${el.y + el.size * 0.8}" fill="${el.color}" font-size="${el.size}" font-weight="600" font-family="Helvetica, Arial, sans-serif">${esc(el.text)}</text>`,
       );
     }
   }
