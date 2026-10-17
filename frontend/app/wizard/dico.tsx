@@ -1,8 +1,17 @@
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
-import { useClients, useCompany, useCreateDocument, useInstallations } from "@/src/api/hooks";
+import {
+  useClients,
+  useCompany,
+  useCreateDocument,
+  useDocument,
+  useInstallations,
+  useUpdateDocument,
+} from "@/src/api/hooks";
+import type { AttachmentT } from "@/src/local/db";
+import { AttachmentPicker } from "@/src/components/attachment-picker";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
 import { ATTACHMENTS, INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
@@ -28,10 +37,14 @@ function parseIT(s: string): string | null {
 export default function DiCoWizard() {
   const styles = useStyles();
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editing = !!id;
+  const { data: existing } = useDocument(id ?? "");
   const { data: clients } = useClients();
   const { data: installations } = useInstallations();
   const { data: company } = useCompany();
   const createDoc = useCreateDocument();
+  const updateDoc = useUpdateDocument();
 
   const [step, setStep] = useState(0);
   const [committente, setCommittente] = useState("");
@@ -43,9 +56,32 @@ export default function DiCoWizard() {
   const [materiali, setMateriali] = useState("");
   const [allegati, setAllegati] = useState<string[]>(["progetto", "relazione_materiali", "schema"]);
   const [allegatiFac, setAllegatiFac] = useState("");
+  const [foto, setFoto] = useState<AttachmentT[]>([]);
   const [luogo, setLuogo] = useState("");
   const [dataIso, setDataIso] = useState(todayISO());
   const [dateText, setDateText] = useState(fmtIT(todayISO()));
+
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!existing || prefilled.current) return;
+    prefilled.current = true;
+    const d = existing.data || {};
+    setCommittente(d.committente?.nome ?? "");
+    setUb(d.ubicazione ?? {});
+    setIntervento(d.intervento ?? "nuovo");
+    setTipologie(d.tipologie ?? []);
+    setDescrizione(d.descrizione_impianto ?? "");
+    setNorme(d.norme_tecniche ?? "");
+    setMateriali(d.materiali ?? "");
+    setAllegati(d.allegati ?? []);
+    setAllegatiFac(d.allegati_facoltativi ?? "");
+    setFoto(d.allegati_foto ?? []);
+    setLuogo(d.luogo ?? "");
+    if (d.data_dichiarazione) {
+      setDataIso(d.data_dichiarazione);
+      setDateText(fmtIT(d.data_dichiarazione));
+    }
+  }, [existing]);
 
   const setU = (k: string, v: string) => setUb((o) => ({ ...o, [k]: v }));
   const toggle = (list: string[], set: (v: string[]) => void, key: string) =>
@@ -81,7 +117,7 @@ export default function DiCoWizard() {
       return;
     }
     const data = {
-      impresa: company ?? {},
+      impresa: editing ? existing?.data?.impresa ?? company ?? {} : company ?? {},
       committente: { nome: committente },
       ubicazione: ub,
       intervento,
@@ -91,23 +127,29 @@ export default function DiCoWizard() {
       materiali,
       allegati,
       allegati_facoltativi: allegatiFac,
+      allegati_foto: foto,
       luogo,
       data_dichiarazione: dataIso,
     };
-    const doc = await createDoc.mutateAsync({ tipo: "dico", data });
-    router.replace(`/document/${doc.id}`);
+    if (editing && id) {
+      await updateDoc.mutateAsync({ id, data });
+      router.replace(`/document/${id}`);
+    } else {
+      const doc = await createDoc.mutateAsync({ tipo: "dico", data });
+      router.replace(`/document/${doc.id}`);
+    }
   };
 
   return (
     <WizardShell
-      title="Dichiarazione di Conformità"
+      title={editing ? "Modifica DiCo" : "Dichiarazione di Conformità"}
       step={step}
       total={TOTAL}
       onClose={() => router.back()}
       onBack={() => setStep((s) => Math.max(0, s - 1))}
       onNext={onNext}
-      nextLabel={step === TOTAL - 1 ? "Genera documento" : "Avanti"}
-      nextLoading={createDoc.isPending}
+      nextLabel={step === TOTAL - 1 ? (editing ? "Salva modifiche" : "Genera documento") : "Avanti"}
+      nextLoading={createDoc.isPending || updateDoc.isPending}
     >
       {step === 0 ? (
         <>
@@ -186,6 +228,8 @@ export default function DiCoWizard() {
             ))}
           </View>
           <TextField label="Altri allegati (facoltativi)" value={allegatiFac} onChangeText={setAllegatiFac} multiline style={styles.area} />
+          <SectionLabel>Foto e scansioni</SectionLabel>
+          <AttachmentPicker value={foto} onChange={setFoto} />
           <SectionLabel>Luogo e data</SectionLabel>
           <TextField label="Luogo" value={luogo} onChangeText={setLuogo} testID="dico-luogo" />
           <TextField

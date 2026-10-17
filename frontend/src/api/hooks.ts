@@ -1,123 +1,94 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/src/api/client";
+import * as db from "@/src/local/db";
 
-export type ClientT = {
-  id: string;
-  nome: string;
-  codice_fiscale?: string;
-  partita_iva?: string;
-  telefono?: string;
-  email?: string;
-  indirizzo?: string;
-  comune?: string;
-  note?: string;
-};
-
-export type InstallationT = {
-  id: string;
-  descrizione: string;
-  indirizzo?: string;
-  comune?: string;
-  provincia?: string;
-  cap?: string;
-  scala?: string;
-  piano?: string;
-  interno?: string;
-  proprieta?: string;
-  note?: string;
-};
-
-export type CompanyT = Record<string, any>;
-
-export type DocumentT = {
-  id: string;
-  numero: string;
-  tipo: "dico" | "diri";
-  data: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-};
+export type { ClientT, InstallationT, CompanyT, DocumentT, AttachmentT } from "@/src/local/db";
 
 // Company
 export function useCompany() {
-  return useQuery({ queryKey: ["company"], queryFn: () => api<CompanyT>("/company") });
+  return useQuery({ queryKey: ["company"], queryFn: () => db.getCompany() });
 }
 export function useSaveCompany() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: CompanyT) => api<CompanyT>("/company", { method: "PUT", body }),
+    mutationFn: (body: db.CompanyT) => db.saveCompany(body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["company"] }),
   });
 }
 
 // Clients
 export function useClients() {
-  return useQuery({ queryKey: ["clients"], queryFn: () => api<ClientT[]>("/clients") });
+  return useQuery({ queryKey: ["clients"], queryFn: () => db.listClients() });
 }
 export function useSaveClient() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id?: string; body: Partial<ClientT> }) =>
-      id
-        ? api<ClientT>(`/clients/${id}`, { method: "PUT", body })
-        : api<ClientT>("/clients", { method: "POST", body }),
+    mutationFn: ({ id, body }: { id?: string; body: Partial<db.ClientT> }) => db.saveClient(id, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
   });
 }
 export function useDeleteClient() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api(`/clients/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => db.deleteClient(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
   });
 }
 
 // Installations
 export function useInstallations() {
-  return useQuery({ queryKey: ["installations"], queryFn: () => api<InstallationT[]>("/installations") });
+  return useQuery({ queryKey: ["installations"], queryFn: () => db.listInstallations() });
 }
 export function useSaveInstallation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id?: string; body: Partial<InstallationT> }) =>
-      id
-        ? api<InstallationT>(`/installations/${id}`, { method: "PUT", body })
-        : api<InstallationT>("/installations", { method: "POST", body }),
+    mutationFn: ({ id, body }: { id?: string; body: Partial<db.InstallationT> }) =>
+      db.saveInstallation(id, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["installations"] }),
   });
 }
 export function useDeleteInstallation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api(`/installations/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => db.deleteInstallation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["installations"] }),
   });
 }
 
 // Documents
 export function useDocuments() {
-  return useQuery({ queryKey: ["documents"], queryFn: () => api<DocumentT[]>("/documents") });
+  return useQuery({ queryKey: ["documents"], queryFn: () => db.listDocuments() });
 }
 export function useDocument(id: string) {
   return useQuery({
     queryKey: ["documents", id],
-    queryFn: () => api<DocumentT>(`/documents/${id}`),
+    queryFn: () => db.getDocument(id),
     enabled: !!id,
   });
 }
 export function useCreateDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { tipo: string; data: Record<string, any> }) =>
-      api<DocumentT>("/documents", { method: "POST", body }),
+    mutationFn: ({ tipo, data }: { tipo: "dico" | "diri"; data: Record<string, any> }) =>
+      db.createDocument(tipo, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["documents"] }),
+  });
+}
+export function useUpdateDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, any> }) =>
+      db.updateDocument(id, data),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      qc.invalidateQueries({ queryKey: ["documents", vars.id] });
+    },
   });
 }
 export function useDeleteDocument() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api(`/documents/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => db.deleteDocument(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["documents"] }),
   });
 }

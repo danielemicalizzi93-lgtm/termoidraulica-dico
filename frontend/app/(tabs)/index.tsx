@@ -4,10 +4,9 @@ import { CaretRight, FileText, Plus, ShieldCheck } from "phosphor-react-native";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useAuth } from "@/src/auth/auth-context";
 import { ScreenHeader } from "@/src/components/header";
 import { DocumentCard } from "@/src/components/document-card";
-import { useDocuments } from "@/src/api/hooks";
+import { useCompany, useDocuments } from "@/src/api/hooks";
 import { usesNativeTabs } from "@/src/navigation";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 
@@ -16,16 +15,16 @@ export default function Dashboard() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { data: company } = useCompany();
   const { data: documents, isLoading } = useDocuments();
 
   const bottomChrome = usesNativeTabs ? insets.bottom : 0;
   const recent = (documents ?? []).slice(0, 5);
-  const firstName = (user?.name || "").split(" ")[0] || "installatore";
+  const impresa = company?.denominazione?.trim();
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={`Ciao, ${firstName}`} subtitle="Crea una nuova dichiarazione" />
+      <ScreenHeader title={impresa || "Le tue dichiarazioni"} subtitle="Crea una nuova dichiarazione" />
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: bottomChrome + spacing.xl, gap: spacing.lg }}
         showsVerticalScrollIndicator={false}

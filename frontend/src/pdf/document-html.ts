@@ -51,6 +51,11 @@ const STYLE = `
   .sign .box { width: 45%; text-align: center; }
   .sign .line { border-top: 1px solid #1C1C1A; margin-top: 36px; padding-top: 4px; font-size: 10px; color: #73736D; }
   .place { margin-top: 18px; font-size: 11px; }
+  .foto-section { margin-top: 18px; }
+  .foto-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .foto { width: 31%; }
+  .foto img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; border: 1px solid #E3E3E0; }
+  .foto-cap { font-size: 9px; color: #73736D; margin-top: 3px; text-align: center; }
 `;
 
 function anagraficaImpresa(c: AnyData): string {
@@ -95,6 +100,18 @@ function tipologie(data: AnyData): string {
   );
 }
 
+function fotoSection(d: AnyData): string {
+  const foto = d.allegati_foto || [];
+  if (!foto.length) return "";
+  const imgs = foto
+    .map(
+      (f: AnyData) =>
+        `<div class="foto"><img src="${esc(f.dataUri || f.uri)}" /><div class="foto-cap">${esc(f.name || "Allegato")}</div></div>`,
+    )
+    .join("");
+  return `<div class="section foto-section"><div class="s-title">Allegati fotografici</div><div class="foto-grid">${imgs}</div></div>`;
+}
+
 export function generateHtml(doc: { tipo: string; numero: string; data: AnyData }, company: AnyData): string {
   const d = doc.data || {};
   const committente = d.committente?.nome || "";
@@ -132,6 +149,7 @@ export function generateHtml(doc: { tipo: string; numero: string; data: AnyData 
           : ""
       }
       ${section("Allegati obbligatori", `<ul>${allegati || "<li>—</li>"}</ul>${d.allegati_facoltativi ? `<div style="margin-top:6px">Facoltativi: ${esc(d.allegati_facoltativi)}</div>` : ""}`)}
+      ${fotoSection(d)}
       <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>
       <div class="sign">
         <div class="box"><div class="line">Il responsabile tecnico</div></div>
@@ -168,6 +186,7 @@ export function generateHtml(doc: { tipo: string; numero: string; data: AnyData 
     ${section("Accertamenti effettuati", `<ul>${basis || "<li>—</li>"}</ul>`)}
     ${d.norme_tecniche ? section("Norme tecniche", `<table>${row("Norme applicate", d.norme_tecniche)}</table>`) : ""}
     ${d.note ? section("Note", `<div class="declare">${esc(d.note)}</div>`) : ""}
+    ${fotoSection(d)}
     <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>
     <div class="sign">
       <div class="box"></div>

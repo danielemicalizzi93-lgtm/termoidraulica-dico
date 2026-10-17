@@ -1,12 +1,11 @@
-import { useRouter } from "expo-router";
-import { SignOut } from "phosphor-react-native";
+import { LockKey } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCompany, useSaveCompany } from "@/src/api/hooks";
-import { useAuth } from "@/src/auth/auth-context";
+import { useLock } from "@/src/local/lock-context";
 import { Button, Card, CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { ScreenHeader } from "@/src/components/header";
 import { ABILITAZIONI } from "@/src/constants/dico";
@@ -16,14 +15,17 @@ import { makeStyles, spacing, useTheme } from "@/src/theme";
 export default function ProfileScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, signOut } = useAuth();
+  const { hasPin, setPin, disablePin } = useLock();
   const { data: company } = useCompany();
   const saveCompany = useSaveCompany();
 
   const [form, setForm] = useState<Record<string, any>>({});
   const [saved, setSaved] = useState(false);
+  const [pinMode, setPinMode] = useState(false);
+  const [pin1, setPin1] = useState("");
+  const [pin2, setPin2] = useState("");
+  const [pinError, setPinError] = useState("");
 
   useEffect(() => {
     if (company) setForm({ abilitazioni: [], ...company });
@@ -42,24 +44,94 @@ export default function ProfileScreen() {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const savePin = async () => {
+    setPinError("");
+    if (pin1.length < 4) {
+      setPinError("Il PIN deve avere almeno 4 cifre");
+      return;
+    }
+    if (pin1 !== pin2) {
+      setPinError("I due PIN non coincidono");
+      return;
+    }
+    await setPin(pin1);
+    setPinMode(false);
+    setPin1("");
+    setPin2("");
+  };
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Profilo" subtitle="Dati impresa e account" />
+      <ScreenHeader title="Profilo" subtitle="Dati impresa e sicurezza" />
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: bottomChrome + spacing["2xl"], gap: spacing.lg }}
         bottomOffset={20}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.heading}>Blocco con PIN</Text>
         <Card>
-          <View style={styles.accountRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{(user?.name || "U").charAt(0).toUpperCase()}</Text>
+          <View style={styles.pinRow}>
+            <View style={styles.pinIcon}>
+              <LockKey color={colors.brandPrimary} size={22} weight="fill" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.accName}>{user?.name}</Text>
-              <Text style={styles.accEmail}>{user?.email}</Text>
+              <Text style={styles.pinTitle}>{hasPin ? "PIN attivo" : "PIN non impostato"}</Text>
+              <Text style={styles.pinSub}>
+                {hasPin
+                  ? "L'app richiede il PIN all'avvio."
+                  : "Proteggi l'accesso all'app con un codice numerico."}
+              </Text>
             </View>
           </View>
+
+          {pinMode ? (
+            <View style={styles.pinForm}>
+              <TextField
+                label="Nuovo PIN (min 4 cifre)"
+                value={pin1}
+                onChangeText={setPin1}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+                testID="pin-input-1"
+              />
+              <TextField
+                label="Conferma PIN"
+                value={pin2}
+                onChangeText={setPin2}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+                testID="pin-input-2"
+              />
+              {pinError ? <Text style={styles.pinErr}>{pinError}</Text> : null}
+              <Button testID="save-pin-button" title="Salva PIN" onPress={savePin} />
+            </View>
+          ) : (
+            <View style={styles.pinActions}>
+              <Button
+                testID="toggle-pin-button"
+                title={hasPin ? "Cambia PIN" : "Imposta PIN"}
+                variant="secondary"
+                onPress={() => {
+                  setPin1("");
+                  setPin2("");
+                  setPinError("");
+                  setPinMode(true);
+                }}
+                style={{ flex: 1 }}
+              />
+              {hasPin ? (
+                <Button
+                  testID="remove-pin-button"
+                  title="Rimuovi"
+                  variant="ghost"
+                  onPress={disablePin}
+                  style={{ flex: 1 }}
+                />
+              ) : null}
+            </View>
+          )}
         </Card>
 
         <Text style={styles.heading}>Dati impresa installatrice</Text>
@@ -123,15 +195,6 @@ export default function ProfileScreen() {
           onPress={onSave}
           loading={saveCompany.isPending}
         />
-
-        <Button
-          testID="logout-button"
-          title="Esci"
-          variant="ghost"
-          icon={<SignOut color={colors.error} size={20} />}
-          onPress={signOut}
-          style={styles.logout}
-        />
       </KeyboardAwareScrollView>
     </View>
   );
@@ -139,20 +202,21 @@ export default function ProfileScreen() {
 
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
-  accountRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.brandPrimary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { fontSize: 22, fontWeight: "800", color: colors.onBrandPrimary },
-  accName: { fontSize: 17, fontWeight: "700", color: colors.onSurface },
-  accEmail: { fontSize: 13, color: colors.muted },
   heading: { fontSize: 16, fontWeight: "700", color: colors.onSurface },
   fields: { gap: spacing.md },
   rowFields: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-end" },
-  logout: { borderColor: colors.error },
+  pinRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  pinIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.brandTertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pinTitle: { fontSize: 15, fontWeight: "700", color: colors.onSurface },
+  pinSub: { fontSize: 12, color: colors.muted },
+  pinActions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
+  pinForm: { gap: spacing.md, marginTop: spacing.md },
+  pinErr: { color: colors.error, fontSize: 13 },
 }));

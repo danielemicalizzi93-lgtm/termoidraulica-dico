@@ -1,0 +1,32 @@
+{
+  "summary": "Frontend-only testing for the 100% LOCAL/OFFLINE refactor of the DiCo/DiRi app (no backend/auth, AsyncStorage/localStorage persistence). All 12 requested flows verified on mobile viewport 390x844. App opens directly on Dashboard with create-dico-card / create-diri-card and 'Nessun documento' empty state. DiCo wizard: step0 commits via dico-committente, step1 blocks Avanti until a PLANT_TYPE is selected (verified: tapping wizard-next with 0 tipologie keeps user on step1; after selecting one plant it proceeds), step2 is passthrough, step3 shows attach-camera and attach-library buttons (not tested for upload per instructions) plus dico-luogo/dico-data and 'Genera documento' which navigates to /document/{id} with numero DICO-2026-0001. Edit flow: edit-button opens the DiCo wizard in edit mode with committente pre-filled; changing the value and tapping 'Salva modifiche' updates the document (verified new value visible in detail body + preview). Export: export-pdf-button present and clickable in detail footer. Documents tab lists the created doc and chips filter-all / filter-dico / filter-diri all respond and filter correctly. DiRi wizard: full 4-step flow produces DIRI-2026-0001 and lands on the detail. Registry: add-registry-button opens /client/new, saving a client with testID client-nome + save-client-button makes it appear in the segment-clients list; back in DiCo step0 the saved client renders as a pick-client-* pill that pre-fills committente (also populates luogo when empty). Profile: field-denominazione saves via save-company-button and persists after full page reload (verified via UI + localStorage key dico_company). PIN: toggle-pin-button -> pin-input-1 + pin-input-2 -> save-pin-button toggles the state to 'PIN attivo'; remove-pin-button restores 'PIN non impostato'. No red screens, no console errors during the flow, no deprecated expo-av/expo-barcode-scanner/expo-background-fetch usage detected.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_1.json",
+    "/app/test_reports/iteration_2.json"
+  ],
+  "action_items": [
+    "No actionable issues. Camera/gallery upload (attach-camera / attach-library) cannot be exercised on web preview - must be validated on-device (expo-image-picker). Verified only that the buttons are rendered with correct testIDs on DiCo step3 and DiRi step3.",
+    "Minor low-priority left over from iteration_1 (uncontrolled->controlled TextInput warning in src/components/ui.tsx) was not reproduced in this run on the critical flows; still worth coalescing TextField value with '' at the component boundary when main agent has a moment."
+  ],
+  "critical_code_review_comments": [
+    "Local DB layer in src/local/db.ts is clean: counters are per-year/per-tipo and persisted (DICO-YYYY-0001...); documents are not soft-deleted (hard delete) - acceptable for a single-device app.",
+    "updateDocument throws if id not found - detail screen already handles missing doc via isLoading; good.",
+    "LockProvider stores PIN via storage.secureSet (secure-store on native, localStorage fallback on web) - OK for an offline-only app.",
+    "Document detail precomputes html with foto turned to dataURI via toDataUri - good for sharing/printing offline.",
+    "No deprecated expo packages detected (uses expo-image-picker which is current). expo-image, expo-haptics, phosphor-react-native all current."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (no backend)", "frontend": "100% on the 12 requested flows" },
+  "seed_data_creation": "Within browser localStorage only (ephemeral per browser context): one TEST_Mario Rossi (then EDITED) DiCo DICO-2026-0001, one DiRi DIRI-2026-0001, one TEST_Cliente Uno client, one TEST_Impresa Persist company, PIN 1234 (set then removed). All isolated to the test browser session, nothing to clean up server-side.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "App is purely local (no backend). Use mobile viewport 390x844. All critical testIDs are stable: create-dico-card, create-diri-card, wizard-next, wizard-back, dico-committente, dico-luogo, dico-data, plant-*, interv-*, att-*, attach-camera, attach-library, diri-tecnico, diri-committente, diri-luogo, diri-data, basis-*, edit-button, delete-button, back-button, export-pdf-button, document-preview, filter-all/dico/diri, add-registry-button, segment-clients/installations, client-nome, save-client-button, registry-row-{id}, pick-client-{id}, pick-inst-{id}, field-denominazione, save-company-button, toggle-pin-button, pin-input-1, pin-input-2, save-pin-button, remove-pin-button, pin-key-{0..9}, pin-confirm, remove-attachment-{id}, open-settings. React Native Web renders TextField as <div data-testid='X'><input/></div>, so Playwright must fill the inner <input> via '[data-testid=X] input'. Browser-automation sessions do NOT share localStorage between separate invocations - run all persistence tests inside one invocation.",
+  "rca_of_issue": "N/A - no bugs reproduced."
+}

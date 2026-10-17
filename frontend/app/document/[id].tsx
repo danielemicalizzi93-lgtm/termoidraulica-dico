@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CaretLeft, Export, Trash } from "phosphor-react-native";
-import { useState } from "react";
+import { CaretLeft, Export, PencilSimple, Trash } from "phosphor-react-native";
+import { useEffect, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
 import { useCompany, useDeleteDocument, useDocument } from "@/src/api/hooks";
+import { toDataUri } from "@/src/local/attachments";
 import { Button } from "@/src/components/ui";
 import { INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
 import { generateHtml } from "@/src/pdf/document-html";
@@ -26,6 +27,25 @@ export default function DocumentDetail() {
   const { data: company } = useCompany();
   const del = useDeleteDocument();
   const [exporting, setExporting] = useState(false);
+  const [html, setHtml] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!doc) return;
+      const foto = doc.data?.allegati_foto || [];
+      const resolved = await Promise.all(
+        foto.map(async (f: any) => ({ ...f, dataUri: await toDataUri(f.uri) })),
+      );
+      const data = { ...doc.data, allegati_foto: resolved };
+      if (active) {
+        setHtml(generateHtml({ ...doc, data }, doc.data?.impresa || company || {}));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [doc, company]);
 
   if (isLoading || !doc) {
     return (
@@ -35,7 +55,6 @@ export default function DocumentDetail() {
     );
   }
 
-  const html = generateHtml(doc, doc.data?.impresa || company || {});
   const d = doc.data || {};
   const isDico = doc.tipo === "dico";
 
@@ -46,6 +65,10 @@ export default function DocumentDetail() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const onEdit = () => {
+    router.push(`/wizard/${doc.tipo}?id=${doc.id}` as any);
   };
 
   const onDelete = async () => {
@@ -63,6 +86,9 @@ export default function DocumentDetail() {
           <Text style={styles.title}>{doc.numero}</Text>
           <Text style={styles.sub}>{isDico ? "Dichiarazione di Conformità" : "Dichiarazione di Rispondenza"}</Text>
         </View>
+        <Pressable testID="edit-button" onPress={onEdit} style={styles.iconBtn}>
+          <PencilSimple color={colors.brandPrimary} size={20} weight="bold" />
+        </Pressable>
         <Pressable testID="delete-button" onPress={onDelete} style={styles.iconBtn}>
           <Trash color={colors.error} size={20} weight="bold" />
         </Pressable>

@@ -3,46 +3,58 @@
 ## Problem statement (original)
 "Vorrei creare un'app che mi permetta di stilare DiCo per impianti idraulici, gas, climatizzazione e tutto ciò che riguarda la termoidraulica che mi dia la possibilità di stilare anche dichiarazioni di rispondenza."
 
-## User choices
-- Documenti: DiCo (Dichiarazione di Conformità) + DiRi (Dichiarazione di Rispondenza)
-- Anagrafica impresa salvata una volta + clienti/impianti riutilizzabili
-- Export PDF conforme ai modelli DM 37/2008, condivisibile
-- Auth: Google (Emergent) + email/password
-- Stile: professionale/pulito deciso dall'agente (terracotta #C54B3C)
+Iterazione 2 (richiesta utente): modifica di un documento salvato; allegati foto nei documenti e nel PDF; funzionamento 100% locale/offline con blocco PIN opzionale all'avvio.
 
-## Architecture
-- Frontend: Expo Router (React Native), react-query, react-native-keyboard-controller, phosphor icons, expo-print/expo-sharing per PDF, react-native-webview per anteprima.
-- Backend: FastAPI + MongoDB (motor). Sessioni Bearer a 7 giorni in `user_sessions`.
-- Auth: email/password (bcrypt) + Emergent Google OAuth, unificate sullo stesso session_token.
-- Collezioni: users, user_sessions, companies, clients, installations, documents (soft delete con deleted_at).
+## User choices
+- Documenti: DiCo + DiRi.
+- Anagrafica impresa salvata + clienti/impianti riutilizzabili.
+- Export PDF conforme DM 37/2008, condivisibile, con foto allegate in fondo.
+- Architettura: 100% LOCALE sul dispositivo, nessun server, nessun login.
+- Protezione accesso: PIN locale opzionale all'avvio.
+- Stile: professionale/pulito (terracotta #C54B3C).
+
+## Architecture (iterazione 2)
+- 100% on-device. Nessun backend usato dall'app. Tutto offline.
+- Dati persistiti localmente via `@/src/utils/storage` (AsyncStorage / localStorage su web):
+  chiavi `dico_company`, `dico_clients`, `dico_installations`, `dico_documents`, `dico_counters`.
+- Layer dati: `src/local/db.ts` (CRUD + numerazione progressiva per anno/tipo).
+- Hook react-query (`src/api/hooks.ts`) ora chiamano `db.ts` invece della rete.
+- Allegati foto: `expo-image-picker` (fotocamera/galleria) + copia file con `expo-file-system/legacy`;
+  conversione in data URI per includere le immagini nel PDF/anteprima.
+- Blocco PIN: `src/local/lock-context.tsx` (PIN in secure-store) + `LockScreen`, re-lock in background.
+- PDF: `expo-print` + `expo-sharing`, HTML in `src/pdf/document-html.ts` (sezione "Allegati fotografici").
+- NB: il backend FastAPI/Mongo resta nel repo ma NON è più utilizzato dall'app.
 
 ## User persona
-Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in cantiere dal telefono.
+Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in cantiere, spesso senza connessione.
 
 ## Core requirements (static)
-- Creare DiCo e DiRi tramite wizard multi-step.
-- Numerazione automatica progressiva (DICO-ANNO-0001 / DIRI-ANNO-0001).
-- Anagrafica impresa, abilitazioni art.1, dati tecnico per DiRi.
-- Clienti e impianti riutilizzabili.
-- Export/condivisione PDF.
+- Creare e MODIFICARE DiCo e DiRi tramite wizard multi-step.
+- Numerazione automatica (DICO-ANNO-0001 / DIRI-ANNO-0001).
+- Anagrafica impresa + abilitazioni + dati tecnico per DiRi.
+- Clienti e impianti riutilizzabili (precompilazione wizard).
+- Allegare foto/scansioni ed esportarle nel PDF.
+- Tutto offline; accesso protetto da PIN opzionale.
 
-## Implemented (2026-10-13)
-- Auth email/password + Google, gate root-layout, logout.
-- Dashboard con quick-create e documenti recenti.
-- Wizard DiCo (4 step) e DiRi (4 step) con precompilazione da anagrafiche.
-- Anagrafiche Clienti/Impianti (CRUD, soft delete).
-- Profilo impresa + abilitazioni + dati tecnico.
-- Dettaglio documento con anteprima WebView + export PDF.
-- Testing agent: 23/23 backend pass, core frontend pass.
+## Implemented
+- 2026-10-13: MVP (DiCo/DiRi, anagrafiche, PDF, dashboard) — con backend+auth.
+- 2026-10-17: Refactor 100% locale/offline; rimosso backend/auth/login.
+  - Modifica documento salvato (edit mode nei wizard).
+  - Allegati foto (fotocamera/galleria) inclusi nel PDF.
+  - Blocco PIN opzionale all'avvio (set/cambia/rimuovi nel Profilo).
+  - Testing agent: 12/12 flussi frontend PASS.
 
 ## Backlog (prioritized)
-- P1: Logo impresa nel PDF (object storage) e firma digitale/immagine firma.
-- P1: Modifica documento esistente (ri-apertura wizard) oltre alla creazione.
-- P1: Allegati come file/foto (scansione progetto) con object storage.
-- P2: Duplica documento, ricerca/filtri avanzati nell'archivio.
-- P2: Esportazione elenco/registro documenti, backup/condivisione multipla.
+- P1: Logo impresa + firma (immagine) nel PDF.
+- P1: Duplica documento (parti da uno esistente).
+- P2: Backup/export dell'archivio locale (file JSON) e ripristino, per cambio telefono.
+- P2: Ricerca testuale nell'archivio; ordinamento.
 - P2: Dark mode.
 
+## Platform notes
+- Allegati FOTOCAMERA richiedono dispositivo reale (non testabili su Expo Go web preview / l'upload da web non è il target).
+- Numerazione e dati sono per-dispositivo (nessuna sincronizzazione cloud per scelta dell'utente).
+
 ## Next tasks
-- Aggiungere logo + firma al PDF.
-- Abilitare editing di un documento salvato.
+- Logo + firma nel PDF.
+- Funzione di backup/ripristino dell'archivio locale.

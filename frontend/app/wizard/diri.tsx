@@ -1,8 +1,16 @@
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 
-import { useCompany, useCreateDocument, useInstallations } from "@/src/api/hooks";
+import {
+  useCompany,
+  useCreateDocument,
+  useDocument,
+  useInstallations,
+  useUpdateDocument,
+} from "@/src/api/hooks";
+import type { AttachmentT } from "@/src/local/db";
+import { AttachmentPicker } from "@/src/components/attachment-picker";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
 import { DIRI_BASIS, PLANT_TYPES } from "@/src/constants/dico";
@@ -28,9 +36,13 @@ function parseIT(s: string): string | null {
 export default function DiRiWizard() {
   const styles = useStyles();
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editing = !!id;
+  const { data: existing } = useDocument(id ?? "");
   const { data: installations } = useInstallations();
   const { data: company } = useCompany();
   const createDoc = useCreateDocument();
+  const updateDoc = useUpdateDocument();
 
   const [step, setStep] = useState(0);
   const [tecnico, setTecnico] = useState<Record<string, string>>({});
@@ -40,20 +52,45 @@ export default function DiRiWizard() {
   const [basis, setBasis] = useState<string[]>(["sopralluogo", "esperienza"]);
   const [norme, setNorme] = useState("");
   const [note, setNote] = useState("");
+  const [foto, setFoto] = useState<AttachmentT[]>([]);
   const [luogo, setLuogo] = useState("");
   const [dataIso, setDataIso] = useState(todayISO());
   const [dateText, setDateText] = useState(fmtIT(todayISO()));
 
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (company) {
-      setTecnico({
-        nome: company.responsabile_tecnico || "",
-        albo_professione: company.albo_professione || "",
-        albo_provincia: company.albo_provincia || "",
-        albo_numero: company.albo_numero || "",
-      });
+    if (!editing && company) {
+      setTecnico((t) =>
+        t.nome
+          ? t
+          : {
+              nome: company.responsabile_tecnico || "",
+              albo_professione: company.albo_professione || "",
+              albo_provincia: company.albo_provincia || "",
+              albo_numero: company.albo_numero || "",
+            },
+      );
     }
-  }, [company]);
+  }, [company, editing]);
+
+  useEffect(() => {
+    if (!existing || prefilled.current) return;
+    prefilled.current = true;
+    const d = existing.data || {};
+    setTecnico(d.tecnico ?? {});
+    setCommittente(d.committente?.nome ?? "");
+    setUb(d.ubicazione ?? {});
+    setTipologie(d.tipologie ?? []);
+    setBasis(d.basis ?? []);
+    setNorme(d.norme_tecniche ?? "");
+    setNote(d.note ?? "");
+    setFoto(d.allegati_foto ?? []);
+    setLuogo(d.luogo ?? "");
+    if (d.data_dichiarazione) {
+      setDataIso(d.data_dichiarazione);
+      setDateText(fmtIT(d.data_dichiarazione));
+    }
+  }, [existing]);
 
   const setT = (k: string, v: string) => setTecnico((o) => ({ ...o, [k]: v }));
   const setU = (k: string, v: string) => setUb((o) => ({ ...o, [k]: v }));
@@ -93,23 +130,29 @@ export default function DiRiWizard() {
       basis,
       norme_tecniche: norme,
       note,
+      allegati_foto: foto,
       luogo,
       data_dichiarazione: dataIso,
     };
-    const doc = await createDoc.mutateAsync({ tipo: "diri", data });
-    router.replace(`/document/${doc.id}`);
+    if (editing && id) {
+      await updateDoc.mutateAsync({ id, data });
+      router.replace(`/document/${id}`);
+    } else {
+      const doc = await createDoc.mutateAsync({ tipo: "diri", data });
+      router.replace(`/document/${doc.id}`);
+    }
   };
 
   return (
     <WizardShell
-      title="Dichiarazione di Rispondenza"
+      title={editing ? "Modifica DiRi" : "Dichiarazione di Rispondenza"}
       step={step}
       total={TOTAL}
       onClose={() => router.back()}
       onBack={() => setStep((s) => Math.max(0, s - 1))}
       onNext={onNext}
-      nextLabel={step === TOTAL - 1 ? "Genera documento" : "Avanti"}
-      nextLoading={createDoc.isPending}
+      nextLabel={step === TOTAL - 1 ? (editing ? "Salva modifiche" : "Genera documento") : "Avanti"}
+      nextLoading={createDoc.isPending || updateDoc.isPending}
     >
       {step === 0 ? (
         <>
@@ -178,6 +221,8 @@ export default function DiRiWizard() {
           <TextField value={norme} onChangeText={setNorme} placeholder="Norme applicate" multiline style={styles.area} />
           <SectionLabel>Note</SectionLabel>
           <TextField value={note} onChangeText={setNote} placeholder="Note aggiuntive" multiline style={styles.area} />
+          <SectionLabel>Foto e scansioni</SectionLabel>
+          <AttachmentPicker value={foto} onChange={setFoto} />
           <SectionLabel>Luogo e data</SectionLabel>
           <TextField label="Luogo" value={luogo} onChangeText={setLuogo} testID="diri-luogo" />
           <TextField

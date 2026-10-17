@@ -9,14 +9,19 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.termoidraulicadico.og52uz"
+      "bundleIdentifier": "com.emergent.termoidraulicadico.og52uz",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scatta foto da allegare alle dichiarazioni",
+        "NSPhotoLibraryUsageDescription": "Allega foto e scansioni ai documenti"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.emergent.termoidraulicadico.og52uz"
+      "package": "com.emergent.termoidraulicadico.og52uz",
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +41,13 @@
       ],
       "expo-font",
       "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allega foto e scansioni ai documenti",
+          "cameraPermission": "Scatta foto da allegare alle dichiarazioni"
+        }
+      ],
       "expo-secure-store",
       "expo-web-browser",
       "expo-status-bar",
