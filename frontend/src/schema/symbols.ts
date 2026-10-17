@@ -39,6 +39,14 @@ export function symbolSvg(key: SymbolKey, color: string, size = 64): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">${inner(key, color)}</svg>`;
 }
 
+export const PORTS: Record<string, { x: number; y: number }> = {
+  left: { x: 0, y: 32 },
+  right: { x: 64, y: 32 },
+  top: { x: 32, y: 0 },
+  bottom: { x: 32, y: 64 },
+};
+export const PORT_KEYS = Object.keys(PORTS);
+
 export const SYMBOL_PALETTE: { key: SymbolKey; label: string }[] = [
   { key: "valvola", label: "Valvola" },
   { key: "valvola_sfera", label: "Valv. sfera" },

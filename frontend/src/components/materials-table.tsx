@@ -1,36 +1,18 @@
 import { Plus, Trash } from "phosphor-react-native";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { uid } from "@/src/local/db";
+import {
+  fmtNum,
+  materialTotals,
+  newRow,
+  TENUTA_OPTIONS,
+  type MaterialRow,
+} from "@/src/materials";
 import { TextField } from "@/src/components/ui";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 
-export type MaterialRow = {
-  id: string;
-  tipo: "tubo" | "raccordo";
-  descrizione: string;
-  materiale: string;
-  diametro: string;
-  quantita: string;
-  tenuta: string;
-  marca: string;
-};
-
-export const TENUTA_OPTIONS = [
-  "Canapa + pasta",
-  "Teflon/PTFE",
-  "O-ring",
-  "Pressfitting",
-  "Saldatura",
-  "Brasatura",
-  "Incollaggio",
-  "Guarnizione",
-  "Filettata",
-];
-
-export function newRow(tipo: "tubo" | "raccordo" = "tubo"): MaterialRow {
-  return { id: uid(), tipo, descrizione: "", materiale: "", diametro: "", quantita: "", tenuta: "", marca: "" };
-}
+export type { MaterialRow } from "@/src/materials";
+export { newRow, TENUTA_OPTIONS } from "@/src/materials";
 
 export function MaterialsTable({
   value,
@@ -41,6 +23,7 @@ export function MaterialsTable({
 }) {
   const styles = useStyles();
   const { colors } = useTheme();
+  const totals = materialTotals(value);
 
   const update = (id: string, patch: Partial<MaterialRow>) =>
     onChange(value.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -143,6 +126,31 @@ export function MaterialsTable({
           <Text style={styles.addText}>Raccordo</Text>
         </Pressable>
       </View>
+
+      {value.length > 0 ? (
+        <View style={styles.totals} testID="material-totals">
+          <Text style={styles.totalsTitle}>Totali</Text>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Tubi</Text>
+            <Text style={styles.totalsValue}>{fmtNum(totals.tubiMetri)} m</Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>Raccordi</Text>
+            <Text style={styles.totalsValue}>{fmtNum(totals.raccordiPezzi)} pz</Text>
+          </View>
+          {totals.perMateriale.length > 0 ? <View style={styles.totalsDivider} /> : null}
+          {totals.perMateriale.map((m) => (
+            <View key={m.materiale} style={styles.totalsRow}>
+              <Text style={styles.totalsMat} numberOfLines={1}>{m.materiale}</Text>
+              <Text style={styles.totalsValueSmall}>
+                {m.metri > 0 ? `${fmtNum(m.metri)} m` : ""}
+                {m.metri > 0 && m.pezzi > 0 ? " · " : ""}
+                {m.pezzi > 0 ? `${fmtNum(m.pezzi)} pz` : ""}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -194,4 +202,17 @@ const useStyles = makeStyles((colors) => ({
     borderStyle: "dashed",
   },
   addText: { color: colors.brandPrimary, fontWeight: "700", fontSize: 14 },
+  totals: {
+    backgroundColor: colors.brandTertiary,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  totalsTitle: { fontSize: 13, fontWeight: "800", color: colors.onBrandTertiary, textTransform: "uppercase", letterSpacing: 0.5 },
+  totalsRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: spacing.md },
+  totalsLabel: { fontSize: 15, fontWeight: "700", color: colors.onSurface },
+  totalsValue: { fontSize: 15, fontWeight: "800", color: colors.brandPrimary },
+  totalsDivider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
+  totalsMat: { fontSize: 13, color: colors.onSurfaceSecondary, flex: 1 },
+  totalsValueSmall: { fontSize: 13, fontWeight: "700", color: colors.onSurface },
 }));

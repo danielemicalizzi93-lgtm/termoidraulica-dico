@@ -58,6 +58,13 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
   - Tabella materiali (src/components/materials-table.tsx): righe Tubo/Raccordo con descrizione,
     materiale, diametro, quantità (m per tubi / pz per raccordi), tipo di tenuta, marca.
     Salvata in document.data.materiali_rows e resa come tabella nel PDF.
+- 2026-10-17 (d): Totali materiali + aggancio tubazioni ai simboli.
+  - Totali automatici (src/materials.ts materialTotals): metri tubi, pezzi raccordi e breakdown per
+    materiale; mostrati nella tabella (card "Totali") e nel PDF (sezione totali).
+  - Port/bocchelli sui simboli (src/schema/symbols.ts PORTS: left/right/top/bottom). Le tubazioni
+    agganciano al bocchello più vicino (snap, soglia 28px) e il punto viene salvato come riferimento
+    {sym, port}; render.ts resolveLinePoint risolve i riferimenti, così la linea segue il simbolo
+    quando viene spostato/ruotato/ridimensionato. Guide (pallini) visibili in modalità linea.
 
 ## Backlog (prioritized)
 - P1: Logo impresa + firma (immagine) nel PDF.

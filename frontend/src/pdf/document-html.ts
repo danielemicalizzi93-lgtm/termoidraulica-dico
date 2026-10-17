@@ -2,6 +2,7 @@
 
 import { ATTACHMENTS, DIRI_BASIS, INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
 import { buildSchemaSvg, isEmptySchema } from "@/src/schema/render";
+import { fmtNum, materialTotals } from "@/src/materials";
 
 type AnyData = Record<string, any>;
 
@@ -29,6 +30,22 @@ function materialsTable(rows: AnyData[]): string {
 function schemaBlock(d: AnyData): string {
   if (isEmptySchema(d.schema)) return "";
   return `<div class="section"><div class="s-title">Schema dell'impianto</div><div class="schema">${buildSchemaSvg(d.schema)}</div></div>`;
+}
+
+function materialsTotalsHtml(rows: AnyData[]): string {
+  if (!rows || !rows.length) return "";
+  const t = materialTotals(rows as any);
+  const perMat = t.perMateriale
+    .map(
+      (m) =>
+        `<tr><td>${esc(m.materiale)}</td><td>${m.metri > 0 ? fmtNum(m.metri) + " m" : "—"}</td><td>${m.pezzi > 0 ? fmtNum(m.pezzi) + " pz" : "—"}</td></tr>`,
+    )
+    .join("");
+  return `<table class="mat mtot">
+    <tr class="mh"><td>Totali per materiale</td><td>Tubi</td><td>Raccordi</td></tr>
+    ${perMat}
+    <tr class="mtot-grand"><td>TOTALE</td><td>${fmtNum(t.tubiMetri)} m</td><td>${fmtNum(t.raccordiPezzi)} pz</td></tr>
+  </table>`;
 }
 
 function esc(s: any): string {
@@ -85,6 +102,8 @@ const STYLE = `
   .foto-cap { font-size: 9px; color: #73736D; margin-top: 3px; text-align: center; }
   table.mat td { font-size: 10px; }
   table.mat tr.mh td { background: #F0F0EE; font-weight: 700; color: #1C1C1A; }
+  table.mtot { margin-top: 6px; }
+  table.mtot-grand td, tr.mtot-grand td { background: #F5DFDC; font-weight: 800; color: #C54B3C; }
   .schema { width: 100%; border: 1px solid #E3E3E0; border-radius: 6px; padding: 6px; }
   .schema svg { width: 100%; height: auto; display: block; }
 `;
@@ -178,7 +197,7 @@ export function generateHtml(doc: { tipo: string; numero: string; data: AnyData 
       }
       ${
         d.materiali_rows && d.materiali_rows.length
-          ? section("Relazione materiali", materialsTable(d.materiali_rows))
+          ? section("Relazione materiali", materialsTable(d.materiali_rows) + materialsTotalsHtml(d.materiali_rows))
           : ""
       }
       ${schemaBlock(d)}

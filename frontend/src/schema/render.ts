@@ -1,6 +1,13 @@
-import { symbolInner, type SymbolKey } from "@/src/schema/symbols";
+import { PORTS, symbolInner, type SymbolKey } from "@/src/schema/symbols";
 
-export type Point = { x: number; y: number };
+export type FreePoint = { x: number; y: number };
+export type PortRef = { sym: string; port: string };
+export type LinePoint = FreePoint | PortRef;
+export type Point = FreePoint;
+
+export function isPortRef(p: LinePoint): p is PortRef {
+  return (p as PortRef).sym !== undefined;
+}
 
 export type SchemaElement =
   | {
@@ -16,7 +23,7 @@ export type SchemaElement =
   | {
       id: string;
       kind: "line";
-      points: Point[];
+      points: LinePoint[];
       color: string;
       width: number;
     }
@@ -29,6 +36,8 @@ export type SchemaElement =
       color: string;
       size: number;
     };
+
+export type SymbolEl = Extract<SchemaElement, { kind: "symbol" }>;
 
 export type SchemaT = {
   canvas: { w: number; h: number };
@@ -48,6 +57,33 @@ function esc(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// World coordinates of a symbol connection port (accounts for size + rotation).
+export function symbolPortWorld(sym: SymbolEl, portKey: string): FreePoint {
+  const p = PORTS[portKey] || { x: 32, y: 32 };
+  const s = sym.size / 64;
+  const rot = ((sym.rotation || 0) * Math.PI) / 180;
+  const dx = p.x - 32;
+  const dy = p.y - 32;
+  const rx = dx * Math.cos(rot) - dy * Math.sin(rot);
+  const ry = dx * Math.sin(rot) + dy * Math.cos(rot);
+  return { x: sym.x + s * (32 + rx), y: sym.y + s * (32 + ry) };
+}
+
+// Resolve a line point (free or bound to a symbol port) to absolute coords.
+export function resolveLinePoint(pt: LinePoint, elements: SchemaElement[]): FreePoint | null {
+  if (isPortRef(pt)) {
+    const s = elements.find((e) => e.kind === "symbol" && e.id === pt.sym) as SymbolEl | undefined;
+    return s ? symbolPortWorld(s, pt.port) : null;
+  }
+  return { x: pt.x, y: pt.y };
+}
+
+export function resolveLine(points: LinePoint[], elements: SchemaElement[]): FreePoint[] {
+  return points
+    .map((p) => resolveLinePoint(p, elements))
+    .filter((p): p is FreePoint => p !== null);
+}
+
 // Build one composed SVG string for the whole schema (used in PDF + thumbnails).
 export function buildSchemaSvg(schema: SchemaT): string {
   const { w, h } = schema.canvas;
@@ -56,7 +92,9 @@ export function buildSchemaSvg(schema: SchemaT): string {
 
   for (const el of schema.elements) {
     if (el.kind === "line") {
-      const pts = el.points.map((p) => `${p.x},${p.y}`).join(" ");
+      const resolved = resolveLine(el.points, schema.elements);
+      if (resolved.length < 2) continue;
+      const pts = resolved.map((p) => `${p.x},${p.y}`).join(" ");
       parts.push(
         `<polyline points="${pts}" fill="none" stroke="${el.color}" stroke-width="${el.width}" stroke-linecap="round" stroke-linejoin="round"/>`,
       );

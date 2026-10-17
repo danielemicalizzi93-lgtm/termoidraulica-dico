@@ -10,13 +10,20 @@ import {
 } from "phosphor-react-native";
 import { useRef, useState } from "react";
 import { Animated, PanResponder, Platform, Pressable, ScrollView, Text, View } from "react-native";
-import Svg, { Polyline, Rect, SvgXml } from "react-native-svg";
+import Svg, { Circle, Polyline, Rect, SvgXml } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { uid } from "@/src/local/db";
 import { SCHEMA_COLORS, schemaDraft } from "@/src/schema/draft";
-import { emptySchema, type SchemaElement, type SchemaT } from "@/src/schema/render";
-import { SYMBOL_PALETTE, symbolSvg } from "@/src/schema/symbols";
+import {
+  emptySchema,
+  resolveLine,
+  symbolPortWorld,
+  type SchemaElement,
+  type SchemaT,
+  type SymbolEl,
+} from "@/src/schema/render";
+import { PORT_KEYS, SYMBOL_PALETTE, symbolSvg } from "@/src/schema/symbols";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 
 const DEFAULT_SIZE = 48;
@@ -118,7 +125,7 @@ export default function SchemaEditor() {
   const [schema, setSchema] = useState<SchemaT>(() => schemaDraft.get() || emptySchema());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lineMode, setLineMode] = useState(false);
-  const [draftPts, setDraftPts] = useState<{ x: number; y: number }[]>([]);
+  const [draftPts, setDraftPts] = useState<{ x: number; y: number; ref?: { sym: string; port: string } }[]>([]);
   const [color, setColor] = useState(SCHEMA_COLORS[0]);
   const [lineW] = useState(5);
   const canvasRef = useRef(schema.canvas);
@@ -152,15 +159,35 @@ export default function SchemaEditor() {
 
   const onCanvasTap = (x: number, y: number) => {
     if (lineMode) {
-      setDraftPts((p) => [...p, { x, y }]);
+      setDraftPts((p) => [...p, findSnap(x, y) ?? { x, y }]);
     } else {
       setSelectedId(null);
     }
   };
 
+  // Find the nearest symbol port within snap distance.
+  const findSnap = (x: number, y: number) => {
+    const THRESHOLD = 28;
+    let best: { x: number; y: number; ref: { sym: string; port: string } } | null = null;
+    let bestD = THRESHOLD;
+    for (const el of schema.elements) {
+      if (el.kind !== "symbol") continue;
+      for (const port of PORT_KEYS) {
+        const w = symbolPortWorld(el as SymbolEl, port);
+        const d = Math.hypot(w.x - x, w.y - y);
+        if (d < bestD) {
+          bestD = d;
+          best = { x: w.x, y: w.y, ref: { sym: el.id, port } };
+        }
+      }
+    }
+    return best;
+  };
+
   const commitLine = () => {
     if (draftPts.length >= 2) {
-      const el: SchemaElement = { id: uid(), kind: "line", points: draftPts, color, width: lineW };
+      const points = draftPts.map((p) => (p.ref ? { sym: p.ref.sym, port: p.ref.port } : { x: p.x, y: p.y }));
+      const el: SchemaElement = { id: uid(), kind: "line", points, color, width: lineW };
       mutate((els) => [...els, el]);
     }
     setDraftPts([]);
@@ -215,7 +242,9 @@ export default function SchemaEditor() {
             onPress={Platform.OS === "web" ? undefined : () => setSelectedId(null)}
           />
           {lines.map((l) => {
-            const pts = l.points.map((p) => `${p.x},${p.y}`).join(" ");
+            const resolved = resolveLine(l.points, schema.elements);
+            if (resolved.length < 2) return null;
+            const pts = resolved.map((p) => `${p.x},${p.y}`).join(" ");
             return (
               <Polyline
                 key={l.id}
@@ -229,6 +258,23 @@ export default function SchemaEditor() {
               />
             );
           })}
+          {lineMode
+            ? symbols.flatMap((el) =>
+                PORT_KEYS.map((port) => {
+                  const w = symbolPortWorld(el, port);
+                  return (
+                    <Circle
+                      key={`${el.id}-${port}`}
+                      cx={w.x}
+                      cy={w.y}
+                      r={5}
+                      fill={colors.brandPrimary}
+                      opacity={0.55}
+                    />
+                  );
+                }),
+              )
+            : null}
           {draftPts.length > 0 ? (
             <Polyline
               points={draftPts.map((p) => `${p.x},${p.y}`).join(" ")}
