@@ -64,3 +64,25 @@ export async function toDataUri(uri: string): Promise<string> {
     return uri;
   }
 }
+
+
+// Write a base64 data URI back to a persistent file and return its uri.
+// Used when restoring a backup that carries embedded images.
+export async function saveBase64Image(dataUri: string): Promise<string> {
+  if (Platform.OS === "web") return dataUri;
+  if (!dataUri.startsWith("data:")) return dataUri;
+  try {
+    await ensureDir();
+    const match = dataUri.match(/^data:(image\/\w+);base64,(.*)$/);
+    if (!match) return dataUri;
+    const ext = match[1] === "image/png" ? "png" : "jpg";
+    const base64 = match[2];
+    const dest = `${DIR}${uid()}.${ext}`;
+    await FileSystem.writeAsStringAsync(dest, base64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return dest;
+  } catch {
+    return dataUri;
+  }
+}

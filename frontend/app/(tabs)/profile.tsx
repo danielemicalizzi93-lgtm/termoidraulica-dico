@@ -1,4 +1,5 @@
-import { LockKey } from "phosphor-react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { DownloadSimple, LockKey, UploadSimple } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -6,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCompany, useSaveCompany } from "@/src/api/hooks";
 import { useLock } from "@/src/local/lock-context";
+import { applyBackup, backupSummary, exportBackup, pickBackup, type BackupPayload } from "@/src/local/backup";
 import { Button, Card, CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { ScreenHeader } from "@/src/components/header";
 import { ABILITAZIONI } from "@/src/constants/dico";
@@ -19,6 +21,7 @@ export default function ProfileScreen() {
   const { hasPin, setPin, disablePin } = useLock();
   const { data: company } = useCompany();
   const saveCompany = useSaveCompany();
+  const qc = useQueryClient();
 
   const [form, setForm] = useState<Record<string, any>>({});
   const [saved, setSaved] = useState(false);
@@ -26,6 +29,9 @@ export default function ProfileScreen() {
   const [pin1, setPin1] = useState("");
   const [pin2, setPin2] = useState("");
   const [pinError, setPinError] = useState("");
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupMsg, setBackupMsg] = useState("");
+  const [pendingImport, setPendingImport] = useState<BackupPayload | null>(null);
 
   useEffect(() => {
     if (company) setForm({ abilitazioni: [], ...company });
@@ -58,6 +64,44 @@ export default function ProfileScreen() {
     setPinMode(false);
     setPin1("");
     setPin2("");
+  };
+
+  const onExportBackup = async () => {
+    setBackupMsg("");
+    setBackupBusy(true);
+    try {
+      await exportBackup();
+      setBackupMsg("Backup esportato correttamente.");
+    } catch (e: any) {
+      setBackupMsg(e?.message || "Errore durante l'esportazione.");
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const onPickImport = async () => {
+    setBackupMsg("");
+    try {
+      const payload = await pickBackup();
+      if (payload) setPendingImport(payload);
+    } catch (e: any) {
+      setBackupMsg(e?.message || "File non valido.");
+    }
+  };
+
+  const onConfirmImport = async () => {
+    if (!pendingImport) return;
+    setBackupBusy(true);
+    try {
+      await applyBackup(pendingImport);
+      await qc.invalidateQueries();
+      setPendingImport(null);
+      setBackupMsg("Archivio ripristinato con successo.");
+    } catch (e: any) {
+      setBackupMsg(e?.message || "Errore durante il ripristino.");
+    } finally {
+      setBackupBusy(false);
+    }
   };
 
   return (
@@ -132,6 +176,71 @@ export default function ProfileScreen() {
               ) : null}
             </View>
           )}
+        </Card>
+
+        <Text style={styles.heading}>Backup e ripristino</Text>
+        <Card>
+          <View style={styles.pinRow}>
+            <View style={styles.pinIcon}>
+              <DownloadSimple color={colors.brandPrimary} size={22} weight="fill" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pinTitle}>Archivio locale</Text>
+              <Text style={styles.pinSub}>Esporta tutto in un file e ripristinalo su un altro telefono.</Text>
+            </View>
+          </View>
+
+          {pendingImport ? (
+            <View style={styles.pinForm}>
+              <Text style={styles.importWarn}>
+                Ripristinare questo backup?{"\n"}
+                {backupSummary(pendingImport)}
+              </Text>
+              <Text style={styles.importDanger}>Sostituirà tutti i dati attuali sul dispositivo.</Text>
+              <View style={styles.pinActions}>
+                <Button
+                  testID="cancel-import-button"
+                  title="Annulla"
+                  variant="ghost"
+                  onPress={() => setPendingImport(null)}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  testID="confirm-import-button"
+                  title="Sostituisci"
+                  variant="danger"
+                  onPress={onConfirmImport}
+                  loading={backupBusy}
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.pinActions}>
+              <Button
+                testID="export-backup-button"
+                title="Esporta"
+                variant="secondary"
+                onPress={onExportBackup}
+                loading={backupBusy}
+                icon={<DownloadSimple color={colors.onBrandTertiary} size={20} weight="bold" />}
+                style={{ flex: 1 }}
+              />
+              <Button
+                testID="import-backup-button"
+                title="Importa"
+                variant="secondary"
+                onPress={onPickImport}
+                icon={<UploadSimple color={colors.onBrandTertiary} size={20} weight="bold" />}
+                style={{ flex: 1 }}
+              />
+            </View>
+          )}
+          {backupMsg ? (
+            <Text testID="backup-message" style={styles.backupMsg}>
+              {backupMsg}
+            </Text>
+          ) : null}
         </Card>
 
         <Text style={styles.heading}>Dati impresa installatrice</Text>
@@ -219,4 +328,7 @@ const useStyles = makeStyles((colors) => ({
   pinActions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
   pinForm: { gap: spacing.md, marginTop: spacing.md },
   pinErr: { color: colors.error, fontSize: 13 },
+  importWarn: { fontSize: 14, fontWeight: "600", color: colors.onSurface, lineHeight: 20 },
+  importDanger: { fontSize: 13, color: colors.error },
+  backupMsg: { fontSize: 13, color: colors.muted, marginTop: spacing.md },
 }));

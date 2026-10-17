@@ -1,8 +1,35 @@
 // Generates print-ready HTML for DiCo / DiRi documents (DM 37/2008).
 
 import { ATTACHMENTS, DIRI_BASIS, INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
+import { buildSchemaSvg, isEmptySchema } from "@/src/schema/render";
 
 type AnyData = Record<string, any>;
+
+function materialsTable(rows: AnyData[]): string {
+  if (!rows || !rows.length) return "";
+  const body = rows
+    .map(
+      (r) => `<tr>
+        <td>${r.tipo === "tubo" ? "Tubo" : "Raccordo"}</td>
+        <td>${esc(r.descrizione)}</td>
+        <td>${esc(r.materiale)}</td>
+        <td>${esc(r.diametro)}</td>
+        <td>${esc(r.quantita)} ${r.tipo === "tubo" ? "m" : "pz"}</td>
+        <td>${esc(r.tenuta)}</td>
+        <td>${esc(r.marca)}</td>
+      </tr>`,
+    )
+    .join("");
+  return `<table class="mat">
+    <tr class="mh"><td>Tipo</td><td>Descrizione</td><td>Materiale</td><td>Ø</td><td>Q.tà</td><td>Tenuta</td><td>Marca</td></tr>
+    ${body}
+  </table>`;
+}
+
+function schemaBlock(d: AnyData): string {
+  if (isEmptySchema(d.schema)) return "";
+  return `<div class="section"><div class="s-title">Schema dell'impianto</div><div class="schema">${buildSchemaSvg(d.schema)}</div></div>`;
+}
 
 function esc(s: any): string {
   if (s === undefined || s === null) return "";
@@ -56,6 +83,10 @@ const STYLE = `
   .foto { width: 31%; }
   .foto img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; border: 1px solid #E3E3E0; }
   .foto-cap { font-size: 9px; color: #73736D; margin-top: 3px; text-align: center; }
+  table.mat td { font-size: 10px; }
+  table.mat tr.mh td { background: #F0F0EE; font-weight: 700; color: #1C1C1A; }
+  .schema { width: 100%; border: 1px solid #E3E3E0; border-radius: 6px; padding: 6px; }
+  .schema svg { width: 100%; height: auto; display: block; }
 `;
 
 function anagraficaImpresa(c: AnyData): string {
@@ -141,13 +172,16 @@ export function generateHtml(doc: { tipo: string; numero: string; data: AnyData 
       ${d.descrizione_impianto ? section("Descrizione dell'impianto", `<div class="declare">${esc(d.descrizione_impianto)}</div>`) : ""}
       ${section("Dichiarazione", `<div class="declare">${declareText}</div>`)}
       ${
-        d.norme_tecniche || d.materiali
-          ? section(
-              "Norme e materiali",
-              `<table>${row("Norme tecniche applicate", d.norme_tecniche)}${row("Materiali e componenti", d.materiali)}</table>`,
-            )
+        d.norme_tecniche
+          ? section("Norme tecniche", `<table>${row("Norme tecniche applicate", d.norme_tecniche)}</table>`)
           : ""
       }
+      ${
+        d.materiali_rows && d.materiali_rows.length
+          ? section("Relazione materiali", materialsTable(d.materiali_rows))
+          : ""
+      }
+      ${schemaBlock(d)}
       ${section("Allegati obbligatori", `<ul>${allegati || "<li>—</li>"}</ul>${d.allegati_facoltativi ? `<div style="margin-top:6px">Facoltativi: ${esc(d.allegati_facoltativi)}</div>` : ""}`)}
       ${fotoSection(d)}
       <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>

@@ -1,6 +1,7 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { SvgXml } from "react-native-svg";
 
 import {
   useClients,
@@ -12,9 +13,12 @@ import {
 } from "@/src/api/hooks";
 import type { AttachmentT } from "@/src/local/db";
 import { AttachmentPicker } from "@/src/components/attachment-picker";
+import { MaterialsTable, type MaterialRow } from "@/src/components/materials-table";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
 import { ATTACHMENTS, INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
+import { schemaDraft } from "@/src/schema/draft";
+import { buildSchemaSvg, emptySchema, isEmptySchema, type SchemaT } from "@/src/schema/render";
 import { makeStyles, radius, spacing } from "@/src/theme";
 
 const TOTAL = 4;
@@ -53,13 +57,29 @@ export default function DiCoWizard() {
   const [tipologie, setTipologie] = useState<string[]>([]);
   const [descrizione, setDescrizione] = useState("");
   const [norme, setNorme] = useState("");
-  const [materiali, setMateriali] = useState("");
+  const [materialiRows, setMaterialiRows] = useState<MaterialRow[]>([]);
+  const [schema, setSchema] = useState<SchemaT | null>(null);
   const [allegati, setAllegati] = useState<string[]>(["progetto", "relazione_materiali", "schema"]);
   const [allegatiFac, setAllegatiFac] = useState("");
   const [foto, setFoto] = useState<AttachmentT[]>([]);
   const [luogo, setLuogo] = useState("");
   const [dataIso, setDataIso] = useState(todayISO());
   const [dateText, setDateText] = useState(fmtIT(todayISO()));
+
+  const editorOpened = useRef(false);
+  const openSchema = () => {
+    schemaDraft.set(schema ?? emptySchema());
+    editorOpened.current = true;
+    router.push("/schema");
+  };
+  useFocusEffect(
+    useCallback(() => {
+      if (editorOpened.current) {
+        setSchema(schemaDraft.get());
+        editorOpened.current = false;
+      }
+    }, []),
+  );
 
   const prefilled = useRef(false);
   useEffect(() => {
@@ -72,7 +92,8 @@ export default function DiCoWizard() {
     setTipologie(d.tipologie ?? []);
     setDescrizione(d.descrizione_impianto ?? "");
     setNorme(d.norme_tecniche ?? "");
-    setMateriali(d.materiali ?? "");
+    setMaterialiRows(d.materiali_rows ?? []);
+    setSchema(d.schema ?? null);
     setAllegati(d.allegati ?? []);
     setAllegatiFac(d.allegati_facoltativi ?? "");
     setFoto(d.allegati_foto ?? []);
@@ -124,7 +145,8 @@ export default function DiCoWizard() {
       tipologie,
       descrizione_impianto: descrizione,
       norme_tecniche: norme,
-      materiali,
+      materiali_rows: materialiRows,
+      schema,
       allegati,
       allegati_facoltativi: allegatiFac,
       allegati_foto: foto,
@@ -214,8 +236,22 @@ export default function DiCoWizard() {
           <TextField value={descrizione} onChangeText={setDescrizione} placeholder="Descrizione schematica dell'impianto realizzato" multiline style={styles.area} />
           <SectionLabel>Norme tecniche applicate</SectionLabel>
           <TextField value={norme} onChangeText={setNorme} placeholder="es. UNI 7129, UNI 11137, CEI 64-8…" multiline style={styles.area} />
-          <SectionLabel>Materiali e componenti</SectionLabel>
-          <TextField value={materiali} onChangeText={setMateriali} placeholder="Tipologie dei materiali utilizzati" multiline style={styles.area} />
+          <SectionLabel>Relazione materiali</SectionLabel>
+          <MaterialsTable value={materialiRows} onChange={setMaterialiRows} />
+          <SectionLabel>Schema dell'impianto</SectionLabel>
+          <Pressable testID="open-schema" style={styles.schemaBox} onPress={openSchema}>
+            {schema && !isEmptySchema(schema) ? (
+              <View style={styles.schemaThumbWrap}>
+                <SvgXml xml={buildSchemaSvg(schema)} width="100%" height={140} />
+                <Text style={styles.schemaEdit}>Tocca per modificare lo schema</Text>
+              </View>
+            ) : (
+              <View style={styles.schemaEmpty}>
+                <Text style={styles.schemaEmptyTitle}>Disegna schema impianto</Text>
+                <Text style={styles.schemaEmptySub}>Simboli idraulici e tubazioni con colori personalizzabili</Text>
+              </View>
+            )}
+          </Pressable>
         </>
       ) : null}
 
@@ -270,4 +306,10 @@ const useStyles = makeStyles((colors) => ({
   },
   pillText: { color: colors.onBrandTertiary, fontWeight: "600", fontSize: 13 },
   area: { minHeight: 90, textAlignVertical: "top" },
+  schemaBox: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: "hidden", backgroundColor: colors.surfaceSecondary },
+  schemaThumbWrap: { padding: spacing.sm, gap: spacing.xs },
+  schemaEdit: { fontSize: 12, color: colors.brandPrimary, fontWeight: "600", textAlign: "center" },
+  schemaEmpty: { padding: spacing.lg, alignItems: "center", gap: spacing.xs, borderStyle: "dashed", borderWidth: 1, borderColor: colors.brandPrimary, borderRadius: radius.lg, margin: -1 },
+  schemaEmptyTitle: { fontSize: 15, fontWeight: "700", color: colors.brandPrimary },
+  schemaEmptySub: { fontSize: 12, color: colors.muted, textAlign: "center" },
 }));

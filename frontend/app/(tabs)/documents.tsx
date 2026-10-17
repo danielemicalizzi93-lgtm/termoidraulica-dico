@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDocuments } from "@/src/api/hooks";
 import { DocumentCard } from "@/src/components/document-card";
 import { ScreenHeader } from "@/src/components/header";
+import { TextField } from "@/src/components/ui";
 import { usesNativeTabs } from "@/src/navigation";
 import { makeStyles, radius, spacing } from "@/src/theme";
 
@@ -21,13 +22,30 @@ export default function DocumentsScreen() {
   const insets = useSafeAreaInsets();
   const { data, isLoading, refetch, isRefetching } = useDocuments();
   const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
 
   const bottomChrome = usesNativeTabs ? insets.bottom : 0;
-  const docs = (data ?? []).filter((d) => filter === "all" || d.tipo === filter);
+  const q = query.trim().toLowerCase();
+  const docs = (data ?? []).filter((d) => {
+    if (filter !== "all" && d.tipo !== filter) return false;
+    if (!q) return true;
+    const committente = (d.data?.committente?.nome || "").toLowerCase();
+    return d.numero.toLowerCase().includes(q) || committente.includes(q);
+  });
 
   return (
     <View style={styles.root}>
       <ScreenHeader title="Documenti" subtitle={`${data?.length ?? 0} dichiarazioni`} />
+      <View style={styles.searchWrap}>
+        <TextField
+          testID="search-input"
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Cerca per numero o committente"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </View>
       <View style={styles.chipsWrap}>
         <ScrollView
           horizontal
@@ -61,8 +79,10 @@ export default function DocumentsScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty} testID="documents-empty">
-              <Text style={styles.emptyTitle}>Nessun documento</Text>
-              <Text style={styles.emptyText}>Le dichiarazioni create appariranno qui.</Text>
+              <Text style={styles.emptyTitle}>{q ? "Nessun risultato" : "Nessun documento"}</Text>
+              <Text style={styles.emptyText}>
+                {q ? "Prova con un altro numero o committente." : "Le dichiarazioni create appariranno qui."}
+              </Text>
             </View>
           ) : null
         }
@@ -73,6 +93,11 @@ export default function DocumentsScreen() {
 
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
+  searchWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.surface,
+  },
   chipsWrap: {
     height: 56,
     justifyContent: "center",

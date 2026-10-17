@@ -43,6 +43,21 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
   - Allegati foto (fotocamera/galleria) inclusi nel PDF.
   - Blocco PIN opzionale all'avvio (set/cambia/rimuovi nel Profilo).
   - Testing agent: 12/12 flussi frontend PASS.
+- 2026-10-17 (b): Backup/ripristino archivio + ricerca documenti.
+  - Backup: esporta tutto (impresa, clienti, impianti, documenti + foto in base64) in un file JSON
+    e reimporta su altro dispositivo (src/local/backup.ts, expo-document-picker/file-system/sharing).
+    Il PIN NON è incluso nel backup per sicurezza.
+  - Ricerca: barra di ricerca nella tab Documenti per numero o committente (verificata).
+- 2026-10-17 (c): Schema impianto + tabella relazione materiali (DiCo).
+  - Editor schema (app/schema.tsx): simboli idraulici (valvole, pompa, caldaia, radiatore, accumulo,
+    scambiatore, collettore, raccordi, manometro, ecc.), disegno tubazioni a polilinea, colore
+    personalizzabile per OGNI simbolo e linea, ridimensiona/ruota/elimina, sfondo. Simboli definiti
+    come SVG in src/schema/symbols.ts (stessi usati in editor e PDF, vettoriali).
+  - Draggable su nativo (PanResponder); su web selezione via tap (niente drag) per evitare warning RNW.
+  - Schema serializzato in document.data.schema; renderizzato nel PDF come SVG vettoriale (src/schema/render.ts).
+  - Tabella materiali (src/components/materials-table.tsx): righe Tubo/Raccordo con descrizione,
+    materiale, diametro, quantità (m per tubi / pz per raccordi), tipo di tenuta, marca.
+    Salvata in document.data.materiali_rows e resa come tabella nel PDF.
 
 ## Backlog (prioritized)
 - P1: Logo impresa + firma (immagine) nel PDF.

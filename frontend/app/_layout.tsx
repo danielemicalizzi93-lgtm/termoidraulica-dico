@@ -35,6 +35,7 @@ function RootGate() {
       <Stack.Screen name="wizard/dico" options={{ presentation: "card" }} />
       <Stack.Screen name="wizard/diri" options={{ presentation: "card" }} />
       <Stack.Screen name="document/[id]" />
+      <Stack.Screen name="schema" options={{ presentation: "fullScreenModal" }} />
       <Stack.Screen name="client/[id]" options={{ presentation: "modal" }} />
       <Stack.Screen name="installation/[id]" options={{ presentation: "modal" }} />
     </Stack>

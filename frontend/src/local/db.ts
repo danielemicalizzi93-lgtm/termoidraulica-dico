@@ -215,3 +215,32 @@ export async function deleteDocument(id: string): Promise<void> {
   const list = (await readJson<DocumentT[]>(K_DOCUMENTS, [])).filter((d) => d.id !== id);
   await writeJson(K_DOCUMENTS, list);
 }
+
+// ---------------------------------------------------------------------------
+// Backup / restore (full archive)
+// ---------------------------------------------------------------------------
+export type ArchiveT = {
+  company: CompanyT;
+  clients: ClientT[];
+  installations: InstallationT[];
+  documents: DocumentT[];
+  counters: Record<string, number>;
+};
+
+export async function exportAll(): Promise<ArchiveT> {
+  return {
+    company: await getCompany(),
+    clients: await readJson<ClientT[]>(K_CLIENTS, []),
+    installations: await readJson<InstallationT[]>(K_INSTALLATIONS, []),
+    documents: await readJson<DocumentT[]>(K_DOCUMENTS, []),
+    counters: await readJson<Record<string, number>>(K_COUNTERS, {}),
+  };
+}
+
+export async function importAll(data: Partial<ArchiveT>): Promise<void> {
+  await writeJson(K_COMPANY, { ...DEFAULT_COMPANY, ...(data.company || {}) });
+  await writeJson(K_CLIENTS, data.clients || []);
+  await writeJson(K_INSTALLATIONS, data.installations || []);
+  await writeJson(K_DOCUMENTS, data.documents || []);
+  await writeJson(K_COUNTERS, data.counters || {});
+}
