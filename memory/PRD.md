@@ -96,3 +96,8 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 ## Modelli ricorrenti + Logo ditta (Jun 2026)
 - Templates locali (dico_templates): salva/usa modelli per relazione materiali (append righe) e schema (sostituisce) nel wizard DiCo; inclusi nel backup
 - Logo ditta in Profilo (un tocco, galleria), salvato in company.logo_uri, stampato in intestazione di tutti i PDF DiCo/DiRi; incluso nel backup
+
+## Modelli CNA (Jun 2026)
+- src/pdf/cna-html.ts ricrea fedelmente i modelli CNA DiCo (Rev 01-2023) e DiRi, compilati con i dati; allegati (materiali, schema, foto) su pagine successive
+- Dettaglio documento: selettore "Modello CNA" (default) / "Modello app" per anteprima ed esportazione
+- Nuovi campi: impresa (settore, civico, albo artigiani prov/n.), DiCo (n. civico, intervento altro, uso edificio, progetto redatto da + progettista/albo, allegato materiali non normalizzati), DiRi (civico, richiesta di, impianto accertato, anno realizzazione, uso edificio, allegati relazione verifica/certificato/altro)

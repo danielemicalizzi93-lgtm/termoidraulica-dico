@@ -18,7 +18,7 @@ import { TemplateBar } from "@/src/components/template-bar";
 import { uid } from "@/src/local/db";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
-import { ATTACHMENTS, INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
+import { ATTACHMENTS, INTERVENTION_TYPES, PLANT_TYPES, USO_EDIFICIO } from "@/src/constants/dico";
 import { schemaDraft } from "@/src/schema/draft";
 import { buildSchemaSvg, emptySchema, isEmptySchema, type SchemaT } from "@/src/schema/render";
 import { makeStyles, radius, spacing } from "@/src/theme";
@@ -56,6 +56,11 @@ export default function DiCoWizard() {
   const [committente, setCommittente] = useState("");
   const [ub, setUb] = useState<Record<string, string>>({});
   const [intervento, setIntervento] = useState("nuovo");
+  const [interventoAltro, setInterventoAltro] = useState("");
+  const [usoEdificio, setUsoEdificio] = useState("civile");
+  const [progettoDa, setProgettoDa] = useState("responsabile");
+  const [progettistaNome, setProgettistaNome] = useState("");
+  const [progettistaAlbo, setProgettistaAlbo] = useState("");
   const [tipologie, setTipologie] = useState<string[]>([]);
   const [descrizione, setDescrizione] = useState("");
   const [norme, setNorme] = useState("");
@@ -91,6 +96,11 @@ export default function DiCoWizard() {
     setCommittente(d.committente?.nome ?? "");
     setUb(d.ubicazione ?? {});
     setIntervento(d.intervento ?? "nuovo");
+    setInterventoAltro(d.intervento_altro ?? "");
+    setUsoEdificio(d.uso_edificio ?? "civile");
+    setProgettoDa(d.progetto_da ?? "responsabile");
+    setProgettistaNome(d.progettista_nome ?? "");
+    setProgettistaAlbo(d.progettista_albo ?? "");
     setTipologie(d.tipologie ?? []);
     setDescrizione(d.descrizione_impianto ?? "");
     setNorme(d.norme_tecniche ?? "");
@@ -120,6 +130,7 @@ export default function DiCoWizard() {
       comune: i.comune ?? "",
       provincia: i.provincia ?? "",
       cap: i.cap ?? "",
+      civico: i.civico ?? "",
       scala: i.scala ?? "",
       piano: i.piano ?? "",
       interno: i.interno ?? "",
@@ -144,6 +155,11 @@ export default function DiCoWizard() {
       committente: { nome: committente },
       ubicazione: ub,
       intervento,
+      intervento_altro: interventoAltro,
+      uso_edificio: usoEdificio,
+      progetto_da: progettoDa,
+      progettista_nome: progettistaNome,
+      progettista_albo: progettistaAlbo,
       tipologie,
       descrizione_impianto: descrizione,
       norme_tecniche: norme,
@@ -199,7 +215,12 @@ export default function DiCoWizard() {
               ))}
             </ScrollView>
           ) : null}
-          <TextField label="Indirizzo" value={ub.indirizzo} onChangeText={(v) => setU("indirizzo", v)} />
+          <View style={styles.row}>
+            <TextField label="Via / Indirizzo" value={ub.indirizzo} onChangeText={(v) => setU("indirizzo", v)} style={{ flex: 1 } as any} />
+            <View style={{ width: 80 }}>
+              <TextField label="N." value={ub.civico} onChangeText={(v) => setU("civico", v)} testID="dico-civico" />
+            </View>
+          </View>
           <View style={styles.row}>
             <TextField label="Comune" value={ub.comune} onChangeText={(v) => setU("comune", v)} style={{ flex: 1 } as any} />
             <View style={{ width: 80 }}>
@@ -223,6 +244,15 @@ export default function DiCoWizard() {
               <CheckRow key={t.key} mode="radio" label={t.label} checked={intervento === t.key} onToggle={() => setIntervento(t.key)} testID={`interv-${t.key}`} />
             ))}
           </View>
+          {intervento === "altro" ? (
+            <TextField label="Specifica (altro)" value={interventoAltro} onChangeText={setInterventoAltro} placeholder="es. sostituzione caldaia" testID="dico-intervento-altro" />
+          ) : null}
+          <SectionLabel>Edificio adibito ad uso</SectionLabel>
+          <View style={styles.card}>
+            {USO_EDIFICIO.map((t) => (
+              <CheckRow key={t.key} mode="radio" label={t.label} checked={usoEdificio === t.key} onToggle={() => setUsoEdificio(t.key)} testID={`uso-${t.key}`} />
+            ))}
+          </View>
           <SectionLabel>Tipologia impianto (DM 37/08)</SectionLabel>
           <View style={styles.card}>
             {PLANT_TYPES.map((t) => (
@@ -235,7 +265,21 @@ export default function DiCoWizard() {
       {step === 2 ? (
         <>
           <SectionLabel>Descrizione impianto</SectionLabel>
-          <TextField value={descrizione} onChangeText={setDescrizione} placeholder="Descrizione schematica dell'impianto realizzato" multiline style={styles.area} />
+          <TextField value={descrizione} onChangeText={setDescrizione} placeholder="Esecutrice dell'impianto: descrizione sintetica (per il gas indicare tipo: metano, GPL…)" multiline style={styles.area} />
+          <SectionLabel>Progetto redatto da (art. 5)</SectionLabel>
+          <View style={styles.card}>
+            <CheckRow mode="radio" label="Responsabile tecnico dell'impresa" checked={progettoDa === "responsabile"} onToggle={() => setProgettoDa("responsabile")} testID="prog-responsabile" />
+            <CheckRow mode="radio" label="Progettista abilitato" checked={progettoDa === "progettista"} onToggle={() => setProgettoDa("progettista")} testID="prog-progettista" />
+            <CheckRow mode="radio" label="Nessun progetto" checked={progettoDa === ""} onToggle={() => setProgettoDa("")} testID="prog-nessuno" />
+          </View>
+          {progettoDa === "progettista" ? (
+            <View style={styles.row}>
+              <TextField label="Progettista" value={progettistaNome} onChangeText={setProgettistaNome} style={{ flex: 1 } as any} testID="dico-progettista" />
+              <View style={{ width: 120 }}>
+                <TextField label="N. iscr. Albo" value={progettistaAlbo} onChangeText={setProgettistaAlbo} />
+              </View>
+            </View>
+          ) : null}
           <SectionLabel>Norme tecniche applicate</SectionLabel>
           <TextField value={norme} onChangeText={setNorme} placeholder="es. UNI 7129, UNI 11137, CEI 64-8…" multiline style={styles.area} />
           <SectionLabel>Relazione materiali</SectionLabel>

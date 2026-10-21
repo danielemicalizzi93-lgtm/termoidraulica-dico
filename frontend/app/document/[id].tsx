@@ -10,6 +10,7 @@ import { toDataUri } from "@/src/local/attachments";
 import { Button } from "@/src/components/ui";
 import { INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
 import { generateHtml } from "@/src/pdf/document-html";
+import { generateCnaHtml } from "@/src/pdf/cna-html";
 import { exportPdf } from "@/src/pdf/share";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 
@@ -28,6 +29,7 @@ export default function DocumentDetail() {
   const del = useDeleteDocument();
   const [exporting, setExporting] = useState(false);
   const [html, setHtml] = useState("");
+  const [model, setModel] = useState<"cna" | "app">("cna");
 
   useEffect(() => {
     let active = true;
@@ -40,13 +42,15 @@ export default function DocumentDetail() {
       const data = { ...doc.data, allegati_foto: resolved };
       const logo = company?.logo_uri ? await toDataUri(company.logo_uri) : undefined;
       if (active) {
-        setHtml(generateHtml({ ...doc, data }, doc.data?.impresa || company || {}, logo));
+        const impresa = { ...(company || {}), ...(doc.data?.impresa || {}) };
+        const gen = model === "cna" ? generateCnaHtml : generateHtml;
+        setHtml(gen({ ...doc, data }, impresa, logo));
       }
     })();
     return () => {
       active = false;
     };
-  }, [doc, company]);
+  }, [doc, company, model]);
 
   if (isLoading || !doc) {
     return (
@@ -105,6 +109,25 @@ export default function DocumentDetail() {
             value={(d.tipologie || []).map((k: string) => labelFor(PLANT_TYPES, k).split(")")[0] + ")").join(" ")}
           />
           <Row label="Data" value={d.luogo ? `${d.luogo}` : undefined} />
+        </View>
+
+        <Text style={styles.previewLabel}>Modello PDF</Text>
+        <View style={styles.seg}>
+          {(
+            [
+              ["cna", "Modello CNA"],
+              ["app", "Modello app"],
+            ] as const
+          ).map(([k, l]) => (
+            <Pressable
+              key={k}
+              testID={`model-${k}`}
+              style={[styles.segBtn, model === k && styles.segActive]}
+              onPress={() => setModel(k)}
+            >
+              <Text style={[styles.segText, model === k && styles.segTextActive]}>{l}</Text>
+            </Pressable>
+          ))}
         </View>
 
         <Text style={styles.previewLabel}>Anteprima documento</Text>
@@ -166,6 +189,11 @@ const useStyles = makeStyles((colors) => ({
   infoLabel: { fontSize: 13, color: colors.muted },
   infoValue: { fontSize: 14, fontWeight: "600", color: colors.onSurface, flex: 1, textAlign: "right" },
   previewLabel: { fontSize: 14, fontWeight: "700", color: colors.onSurface },
+  seg: { flexDirection: "row", backgroundColor: colors.surfaceTertiary, borderRadius: radius.md, padding: 3 },
+  segBtn: { flex: 1, minHeight: 40, alignItems: "center", justifyContent: "center", borderRadius: radius.sm },
+  segActive: { backgroundColor: colors.brandPrimary },
+  segText: { fontSize: 14, fontWeight: "700", color: colors.muted },
+  segTextActive: { color: colors.onBrandPrimary },
   preview: {
     height: 480,
     backgroundColor: colors.surfaceSecondary,

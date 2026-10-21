@@ -13,7 +13,7 @@ import type { AttachmentT } from "@/src/local/db";
 import { AttachmentPicker } from "@/src/components/attachment-picker";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
-import { DIRI_BASIS, PLANT_TYPES } from "@/src/constants/dico";
+import { DIRI_ALLEGATI, DIRI_BASIS, PLANT_TYPES, USO_EDIFICIO } from "@/src/constants/dico";
 import { makeStyles, radius, spacing } from "@/src/theme";
 
 const TOTAL = 4;
@@ -52,6 +52,12 @@ export default function DiRiWizard() {
   const [basis, setBasis] = useState<string[]>(["sopralluogo", "esperienza"]);
   const [norme, setNorme] = useState("");
   const [note, setNote] = useState("");
+  const [usoEdificio, setUsoEdificio] = useState("civile");
+  const [descrizione, setDescrizione] = useState("");
+  const [anno, setAnno] = useState("");
+  const [richiestaDi, setRichiestaDi] = useState("");
+  const [diriAllegati, setDiriAllegati] = useState<string[]>(["relazione_verifica", "certificato_requisiti"]);
+  const [allegatiAltro, setAllegatiAltro] = useState("");
   const [foto, setFoto] = useState<AttachmentT[]>([]);
   const [luogo, setLuogo] = useState("");
   const [dataIso, setDataIso] = useState(todayISO());
@@ -84,6 +90,12 @@ export default function DiRiWizard() {
     setBasis(d.basis ?? []);
     setNorme(d.norme_tecniche ?? "");
     setNote(d.note ?? "");
+    setUsoEdificio(d.uso_edificio ?? "civile");
+    setDescrizione(d.descrizione_impianto ?? "");
+    setAnno(d.anno_realizzazione ?? "");
+    setRichiestaDi(d.richiesta_di ?? "");
+    setDiriAllegati(d.diri_allegati ?? []);
+    setAllegatiAltro(d.allegati_altro ?? "");
     setFoto(d.allegati_foto ?? []);
     setLuogo(d.luogo ?? "");
     if (d.data_dichiarazione) {
@@ -103,6 +115,7 @@ export default function DiRiWizard() {
       comune: i.comune ?? "",
       provincia: i.provincia ?? "",
       cap: i.cap ?? "",
+      civico: i.civico ?? "",
       scala: i.scala ?? "",
       piano: i.piano ?? "",
       interno: i.interno ?? "",
@@ -130,6 +143,12 @@ export default function DiRiWizard() {
       basis,
       norme_tecniche: norme,
       note,
+      uso_edificio: usoEdificio,
+      descrizione_impianto: descrizione,
+      anno_realizzazione: anno,
+      richiesta_di: richiestaDi,
+      diri_allegati: diriAllegati,
+      allegati_altro: allegatiAltro,
       allegati_foto: foto,
       luogo,
       data_dichiarazione: dataIso,
@@ -167,6 +186,7 @@ export default function DiRiWizard() {
           </View>
           <SectionLabel>Proprietà / Committente</SectionLabel>
           <TextField label="Proprietà" value={committente} onChangeText={setCommittente} testID="diri-committente" />
+          <TextField label="A seguito della richiesta di" value={richiestaDi} onChangeText={setRichiestaDi} placeholder="es. proprietario, amministratore, distributore gas" testID="diri-richiesta" />
         </>
       ) : null}
 
@@ -182,7 +202,12 @@ export default function DiRiWizard() {
               ))}
             </ScrollView>
           ) : null}
-          <TextField label="Indirizzo" value={ub.indirizzo} onChangeText={(v) => setU("indirizzo", v)} />
+          <View style={styles.row}>
+            <TextField label="Via / Indirizzo" value={ub.indirizzo} onChangeText={(v) => setU("indirizzo", v)} style={{ flex: 1 } as any} />
+            <View style={{ width: 80 }}>
+              <TextField label="N." value={ub.civico} onChangeText={(v) => setU("civico", v)} testID="diri-civico" />
+            </View>
+          </View>
           <View style={styles.row}>
             <TextField label="Comune" value={ub.comune} onChangeText={(v) => setU("comune", v)} style={{ flex: 1 } as any} />
             <View style={{ width: 80 }}>
@@ -206,6 +231,15 @@ export default function DiRiWizard() {
               <CheckRow key={t.key} label={t.label} checked={tipologie.includes(t.key)} onToggle={() => toggle(tipologie, setTipologie, t.key)} testID={`plant-${t.key}`} />
             ))}
           </View>
+          <SectionLabel>Impianto accertato</SectionLabel>
+          <TextField value={descrizione} onChangeText={setDescrizione} placeholder="In esito a sopralluogo ed accertamenti dell'impianto…" multiline style={styles.area} testID="diri-descrizione" />
+          <TextField label="Anno di realizzazione (indicativo)" value={anno} onChangeText={(v) => setAnno(v.replace(/\D/g, "").slice(0, 4))} keyboardType="number-pad" testID="diri-anno" />
+          <SectionLabel>Edificio ad uso</SectionLabel>
+          <View style={styles.card}>
+            {USO_EDIFICIO.map((t) => (
+              <CheckRow key={t.key} mode="radio" label={t.label} checked={usoEdificio === t.key} onToggle={() => setUsoEdificio(t.key)} testID={`uso-${t.key}`} />
+            ))}
+          </View>
         </>
       ) : null}
 
@@ -219,6 +253,13 @@ export default function DiRiWizard() {
           </View>
           <SectionLabel>Norme tecniche</SectionLabel>
           <TextField value={norme} onChangeText={setNorme} placeholder="Norme applicate" multiline style={styles.area} />
+          <SectionLabel>Allegati alla dichiarazione</SectionLabel>
+          <View style={styles.card}>
+            {DIRI_ALLEGATI.map((a) => (
+              <CheckRow key={a.key} label={a.label} checked={diriAllegati.includes(a.key)} onToggle={() => toggle(diriAllegati, setDiriAllegati, a.key)} testID={`diri-att-${a.key}`} />
+            ))}
+          </View>
+          <TextField label="Altro allegato" value={allegatiAltro} onChangeText={setAllegatiAltro} testID="diri-allegati-altro" />
           <SectionLabel>Note</SectionLabel>
           <TextField value={note} onChangeText={setNote} placeholder="Note aggiuntive" multiline style={styles.area} />
           <SectionLabel>Foto e scansioni</SectionLabel>

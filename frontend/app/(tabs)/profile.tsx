@@ -263,7 +263,13 @@ export default function ProfileScreen() {
             <TextField label="Responsabile tecnico" value={form.responsabile_tecnico} onChangeText={(v) => set("responsabile_tecnico", v)} />
             <TextField label="Partita IVA" value={form.partita_iva} onChangeText={(v) => set("partita_iva", v)} keyboardType="number-pad" />
             <TextField label="Codice Fiscale" value={form.codice_fiscale} onChangeText={(v) => set("codice_fiscale", v)} autoCapitalize="characters" />
-            <TextField label="Indirizzo sede" value={form.indirizzo} onChangeText={(v) => set("indirizzo", v)} />
+            <TextField label="Operante nel settore" value={form.settore} onChangeText={(v) => set("settore", v)} placeholder="es. termoidraulico" testID="field-settore" />
+            <View style={styles.rowFields}>
+              <TextField label="Via sede" value={form.indirizzo} onChangeText={(v) => set("indirizzo", v)} style={{ flex: 1 } as any} />
+              <View style={{ width: 80 }}>
+                <TextField label="N." value={form.civico} onChangeText={(v) => set("civico", v)} testID="field-civico" />
+              </View>
+            </View>
             <View style={styles.rowFields}>
               <TextField label="Comune" value={form.comune} onChangeText={(v) => set("comune", v)} style={{ flex: 1 } as any} />
               <View style={{ width: 90 }}>
@@ -281,6 +287,12 @@ export default function ProfileScreen() {
                 <TextField label="CCIAA prov." value={form.cciaa_provincia} onChangeText={(v) => set("cciaa_provincia", v)} autoCapitalize="characters" />
               </View>
               <TextField label="N. iscrizione CCIAA" value={form.cciaa_numero} onChangeText={(v) => set("cciaa_numero", v)} style={{ flex: 1 } as any} />
+            </View>
+            <View style={styles.rowFields}>
+              <View style={{ width: 110 }}>
+                <TextField label="Albo artigiani prov." value={form.artigiani_provincia} onChangeText={(v) => set("artigiani_provincia", v)} autoCapitalize="characters" />
+              </View>
+              <TextField label="N. Albo Imprese Artigiane" value={form.artigiani_numero} onChangeText={(v) => set("artigiani_numero", v)} style={{ flex: 1 } as any} testID="field-artigiani-numero" />
             </View>
           </View>
         </Card>

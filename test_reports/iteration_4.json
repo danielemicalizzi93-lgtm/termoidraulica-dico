@@ -1,0 +1,84 @@
+{
+  "summary": "Frontend-only testing of DM 37/2008 CNA-faithful DiCo & DiRi plus new form fields. Mobile viewport 390x844. All targeted testIDs are present and wired. Profile new fields (settore/civico/artigiani_numero) persist via AsyncStorage (dico_company) and are prefilled after reload. DiCo wizard: step 0 civico, step 1 intervento 'altro' reveals dico-intervento-altro, uso-* radios all render, step 2 progetto radios (prog-responsabile/prog-progettista/prog-nessuno) render with dico-progettista revealed on 'progettista', step 3 new attachment 'att-attestazione_non_normalizzati' is present. Document detail segmented model-cna (default) / model-app toggles without crashing; export-pdf-button visible for both. Edit flow repopulates civico=7B, intervento_altro='sostituzione caldaia', progettista='Ing. Rossi'. DiRi wizard: diri-richiesta, diri-civico, diri-descrizione, diri-anno (filter: '19a9b9c0abc' -> '1999' which is digits-only truncated to 4 chars - BEHAVIOR CORRECT), uso-* radios, both diri-att-relazione_verifica and diri-att-certificato_requisiti are checked by default (verified via screenshot), diri-allegati-altro writes to doc. Edit flow prefills all DiRi fields. cna-html.ts code review confirms all new fields are rendered (settore/civico/artigiani_provincia/artigiani_numero in company header, intervento_altro, uso_edificio row, progetto_da branch, diri-allegati row, anno_realizzazione boxes, richiesta_di). PDF HTML output not programmatically captured (expo-print iframe not inspectable on web) - verified by code review of /app/frontend/src/pdf/cna-html.ts.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_results_detail": {
+    "profile": {
+      "field-settore": "FOUND & editable",
+      "field-civico": "FOUND & editable",
+      "field-artigiani-numero": "FOUND & editable",
+      "save-company-button": "FOUND",
+      "persistence": "PASS - settore/civico/artigiani_numero written to dico_company AsyncStorage",
+      "reload_prefill": "PASS - termoidraulico / 12/A / AR-99-TEST all restored after reload"
+    },
+    "dico_wizard": {
+      "step0.dico-civico": "FOUND",
+      "step1.interv-altro reveals dico-intervento-altro": "PASS",
+      "step1.uso-civile/industriale/commercio/altri": "all FOUND and selectable",
+      "step2.prog-responsabile/progettista/nessuno": "all FOUND",
+      "step2.prog-progettista reveals dico-progettista + N. iscr. Albo row": "PASS",
+      "step3.att-attestazione_non_normalizzati": "FOUND",
+      "generate_document": "PASS - navigates to /document/<id>",
+      "edit.prefill": "PASS - civico=7B, intervento_altro=sostituzione caldaia, progettista=Ing. Rossi"
+    },
+    "diri_wizard": {
+      "step0.diri-richiesta": "FOUND & editable",
+      "step1.diri-civico": "FOUND & editable",
+      "step2.diri-descrizione / diri-anno / uso-*": "all FOUND",
+      "step2.anno digit-only + max 4": "PASS (input '19a9b9c0abc' -> value '1999')",
+      "step3.diri-att-relazione_verifica": "FOUND and checked by default (visible checkmark)",
+      "step3.diri-att-certificato_requisiti": "FOUND and checked by default (visible checkmark)",
+      "step3.diri-allegati-altro": "FOUND & editable",
+      "generate_document": "PASS",
+      "edit.prefill": "PASS - richiesta/civico/descrizione/anno/allegati-altro all restored"
+    },
+    "document_detail": {
+      "model-cna_default": "PASS",
+      "model-app": "FOUND",
+      "switch_models_no_crash": "PASS (cna <-> app) for both DiCo and DiRi",
+      "export-pdf-button": "FOUND for both models",
+      "edit-button": "FOUND"
+    },
+    "regression": {
+      "templates/logo/backup": "Regression previously verified in iteration_3 (templates, logo picker, backup export). No code change affects those modules in this iteration (cna-html.ts, wizard forms, profile fields are additive)."
+    },
+    "pdf_html_code_review": {
+      "cna-html.ts.company_header": "VERIFIED - lines 154-157 insert settore/indirizzo/civico and artigiani_provincia/artigiani_numero checkbox",
+      "cna-html.ts.intervento_altro": "VERIFIED - line 162 renders cb(iv==='altro') + f(intervento_altro, 80)",
+      "cna-html.ts.uso_edificio_row": "VERIFIED - line 166 usoRow(uso_edificio)",
+      "cna-html.ts.progettista_branch": "VERIFIED - line 170 cb(progetto_da==='progettista') + progettista_nome/albo",
+      "cna-html.ts.attestazione_non_normalizzati": "VERIFIED - line 144 maps key to CNA attachment label",
+      "cna-html.ts.diri_section": "VERIFIED - lines 197-221 render anno (padded 4-char boxes), richiesta_di, diri_allegati, allegati_altro"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_1.json",
+    "/app/test_reports/iteration_2.json",
+    "/app/test_reports/iteration_3.json",
+    "/app/test_reports/iteration_4.json"
+  ],
+  "action_items": [
+    "Non-blocking: on-device validation needed for the CNA PDF model (visually confirm layout matches the uploaded DiCo/DiRi CNA templates when exported from an actual Expo build - web preview cannot inspect expo-print iframe output).",
+    "Minor polish (optional): default checked attachment 'certificato_requisiti' is now shared between DiCo (ATTACHMENTS list) and DiRi (DIRI_ALLEGATI) with same key - both wizards keep independent state via `allegati` (DiCo) and `diri_allegati` (DiRi) so no collision, OK as-is."
+  ],
+  "critical_code_review_comments": [
+    "profile.tsx: new fields are plumbed through form state and persisted via useSaveCompany; prefill works via useEffect([company]) spreading {abilitazioni: [], ...company}.",
+    "dico.tsx: new state intervento_altro, uso_edificio (default 'civile'), progetto_da (default 'responsabile'), progettista_nome, progettista_albo are serialized into data and prefilled from existing.data on edit - all round-trip correctly.",
+    "diri.tsx: new state uso_edificio, descrizione_impianto, anno_realizzazione (digit-filtered via replace(/\\D/g,'').slice(0,4)), richiesta_di, diri_allegati (default both checked), allegati_altro all round-trip correctly.",
+    "document/[id].tsx: segmented control switches between generateCnaHtml and generateHtml via `model` state; useEffect depends on [doc, company, model] so switching re-renders html (preview text is a web-only hint since expo-print opens Print API).",
+    "cna-html.ts: single-page CNA layout uses f() for underlined fields and cb() for checkbox marker characters - all new wizard fields are mapped correctly.",
+    "No deprecated expo packages introduced; no new UI issues; all testIDs listed in the review request are present and functional."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (fully offline, no backend)", "frontend": "All targeted UI flows and testIDs pass end-to-end (profile persistence + reload prefill, DiCo wizard full happy-path + edit prefill, DiRi wizard full happy-path + edit prefill, document detail model switch, both export buttons present). PDF rendered HTML content verified by code review (iframe not inspectable on web preview)." },
+  "seed_data_creation": "Per-invocation browser localStorage only (not persistent across runs): one company 'termoidraulico/12/A/AR-99-TEST', one DICO-2026-0001 with TEST Comm, one DIRI-2026-0001 with TEST Prop. No server data touched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Add to the standard testID list from iteration_3: field-settore, field-civico, field-artigiani-numero, dico-civico, dico-intervento-altro, uso-civile, uso-industriale, uso-commercio, uso-altri, prog-responsabile, prog-progettista, prog-nessuno, dico-progettista, att-attestazione_non_normalizzati, diri-richiesta, diri-civico, diri-descrizione, diri-anno, diri-att-relazione_verifica, diri-att-certificato_requisiti, diri-allegati-altro, model-cna, model-app. On DocumentDetail web preview shows only a text hint ('Tocca Esporta PDF per aprire l'anteprima stampabile.') and cannot be used to inspect the HTML; use `cna-html.ts` code review or exportPdf -> inspect generated string by instrumenting generateCnaHtml. The web storage wrapper double-stringifies: let v=JSON.parse(raw); if (typeof v==='string') v=JSON.parse(v);. Wizard next button testID is wizard-next.",
+  "rca_of_issue": "N/A - no bugs reproduced. All features from the review request work as expected on web preview."
+}

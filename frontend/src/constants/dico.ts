@@ -32,6 +32,19 @@ export const ATTACHMENTS: { key: string; label: string }[] = [
   { key: "schema", label: "Schema dell'impianto realizzato" },
   { key: "riferimento_dichiarazioni", label: "Riferimento a dichiarazioni di conformità precedenti o parziali" },
   { key: "certificato_requisiti", label: "Copia del certificato di riconoscimento dei requisiti tecnico-professionali" },
+  { key: "attestazione_non_normalizzati", label: "Attestazione di conformità per materiali o sistemi non normalizzati" },
+];
+
+export const USO_EDIFICIO: { key: string; label: string }[] = [
+  { key: "civile", label: "Civile" },
+  { key: "industriale", label: "Industriale" },
+  { key: "commercio", label: "Commercio" },
+  { key: "altri", label: "Altri usi" },
+];
+
+export const DIRI_ALLEGATI: { key: string; label: string }[] = [
+  { key: "relazione_verifica", label: "Relazione di verifica impianto" },
+  { key: "certificato_requisiti", label: "Copia del certificato di riconoscimento dei requisiti tecnico-professionali" },
 ];
 
 export function plantLabelShort(key: string): string {
