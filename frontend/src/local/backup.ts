@@ -34,11 +34,15 @@ async function buildJson(): Promise<string> {
       return { ...doc, data: { ...doc.data, allegati_foto: embedded } };
     }),
   );
+  const company = all.company?.logo_uri
+    ? { ...all.company, logo_uri: await toDataUri(all.company.logo_uri) }
+    : all.company;
   const payload: BackupPayload = {
     app: "dicopro",
     version: 1,
     exportedAt: new Date().toISOString(),
     ...all,
+    company,
     documents,
   };
   return JSON.stringify(payload);
@@ -101,12 +105,16 @@ export async function applyBackup(payload: BackupPayload): Promise<void> {
       return { ...doc, data: { ...doc.data, allegati_foto: restored } };
     }),
   );
+  const company = payload.company?.logo_uri
+    ? { ...payload.company, logo_uri: await saveBase64Image(payload.company.logo_uri) }
+    : payload.company;
   await db.importAll({
-    company: payload.company,
+    company,
     clients: payload.clients,
     installations: payload.installations,
     documents,
     counters: payload.counters,
+    templates: payload.templates,
   });
 }
 

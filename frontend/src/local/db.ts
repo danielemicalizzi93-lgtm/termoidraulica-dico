@@ -8,6 +8,7 @@ const K_CLIENTS = "dico_clients";
 const K_INSTALLATIONS = "dico_installations";
 const K_DOCUMENTS = "dico_documents";
 const K_COUNTERS = "dico_counters";
+const K_TEMPLATES = "dico_templates";
 
 export function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
@@ -217,6 +218,36 @@ export async function deleteDocument(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Templates (reusable materials lists and schemas)
+// ---------------------------------------------------------------------------
+export type TemplateKind = "materiali" | "schema";
+export type TemplateT = {
+  id: string;
+  kind: TemplateKind;
+  nome: string;
+  data: any;
+  created_at: string;
+};
+
+export async function listTemplates(): Promise<TemplateT[]> {
+  const list = await readJson<TemplateT[]>(K_TEMPLATES, []);
+  return [...list].sort((a, b) => a.nome.localeCompare(b.nome));
+}
+
+export async function saveTemplate(kind: TemplateKind, nome: string, data: any): Promise<TemplateT> {
+  const list = await readJson<TemplateT[]>(K_TEMPLATES, []);
+  const created: TemplateT = { id: uid(), kind, nome, data, created_at: nowIso() };
+  list.push(created);
+  await writeJson(K_TEMPLATES, list);
+  return created;
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  const list = (await readJson<TemplateT[]>(K_TEMPLATES, [])).filter((t) => t.id !== id);
+  await writeJson(K_TEMPLATES, list);
+}
+
+// ---------------------------------------------------------------------------
 // Backup / restore (full archive)
 // ---------------------------------------------------------------------------
 export type ArchiveT = {
@@ -225,6 +256,7 @@ export type ArchiveT = {
   installations: InstallationT[];
   documents: DocumentT[];
   counters: Record<string, number>;
+  templates?: TemplateT[];
 };
 
 export async function exportAll(): Promise<ArchiveT> {
@@ -234,6 +266,7 @@ export async function exportAll(): Promise<ArchiveT> {
     installations: await readJson<InstallationT[]>(K_INSTALLATIONS, []),
     documents: await readJson<DocumentT[]>(K_DOCUMENTS, []),
     counters: await readJson<Record<string, number>>(K_COUNTERS, {}),
+    templates: await readJson<TemplateT[]>(K_TEMPLATES, []),
   };
 }
 
@@ -243,4 +276,5 @@ export async function importAll(data: Partial<ArchiveT>): Promise<void> {
   await writeJson(K_INSTALLATIONS, data.installations || []);
   await writeJson(K_DOCUMENTS, data.documents || []);
   await writeJson(K_COUNTERS, data.counters || {});
+  await writeJson(K_TEMPLATES, data.templates || []);
 }

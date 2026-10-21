@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as db from "@/src/local/db";
 
-export type { ClientT, InstallationT, CompanyT, DocumentT, AttachmentT } from "@/src/local/db";
+export type { ClientT, InstallationT, CompanyT, DocumentT, AttachmentT, TemplateT } from "@/src/local/db";
 
 // Company
 export function useCompany() {
@@ -52,6 +52,30 @@ export function useDeleteInstallation() {
   return useMutation({
     mutationFn: (id: string) => db.deleteInstallation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["installations"] }),
+  });
+}
+
+// Templates
+export function useTemplates(kind: db.TemplateKind) {
+  return useQuery({
+    queryKey: ["templates"],
+    queryFn: () => db.listTemplates(),
+    select: (list) => list.filter((t) => t.kind === kind),
+  });
+}
+export function useSaveTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ kind, nome, data }: { kind: db.TemplateKind; nome: string; data: any }) =>
+      db.saveTemplate(kind, nome, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+export function useDeleteTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => db.deleteTemplate(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
   });
 }
 

@@ -14,6 +14,8 @@ import {
 import type { AttachmentT } from "@/src/local/db";
 import { AttachmentPicker } from "@/src/components/attachment-picker";
 import { MaterialsTable, type MaterialRow } from "@/src/components/materials-table";
+import { TemplateBar } from "@/src/components/template-bar";
+import { uid } from "@/src/local/db";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
 import { ATTACHMENTS, INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
@@ -237,8 +239,25 @@ export default function DiCoWizard() {
           <SectionLabel>Norme tecniche applicate</SectionLabel>
           <TextField value={norme} onChangeText={setNorme} placeholder="es. UNI 7129, UNI 11137, CEI 64-8…" multiline style={styles.area} />
           <SectionLabel>Relazione materiali</SectionLabel>
+          <TemplateBar
+            kind="materiali"
+            canSave={materialiRows.length > 0}
+            getData={() => materialiRows}
+            onApply={(t) =>
+              setMaterialiRows((rows) => [
+                ...rows,
+                ...((t.data || []) as MaterialRow[]).map((r) => ({ ...r, id: uid() })),
+              ])
+            }
+          />
           <MaterialsTable value={materialiRows} onChange={setMaterialiRows} />
           <SectionLabel>Schema dell'impianto</SectionLabel>
+          <TemplateBar
+            kind="schema"
+            canSave={!!schema && !isEmptySchema(schema)}
+            getData={() => schema}
+            onApply={(t) => setSchema(JSON.parse(JSON.stringify(t.data)))}
+          />
           <Pressable testID="open-schema" style={styles.schemaBox} onPress={openSchema}>
             {schema && !isEmptySchema(schema) ? (
               <View style={styles.schemaThumbWrap}>

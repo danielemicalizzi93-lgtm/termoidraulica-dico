@@ -1,0 +1,67 @@
+{
+  "summary": "Frontend-only testing of the two new offline features: 'Modelli Ricorrenti' (reusable materials/schema templates) and one-tap company logo on all documents. Mobile viewport 390x844. 18/19 automated UI checks passed; T17/T18 (PDF HTML content of img.logo in .doc-head) could not be programmatically captured because expo-print on web triggers the browser Print API via an inline iframe whose content is not reachable from Playwright. The underlying contract is verified by code review (document-html.ts line 173 inserts <img class=\"logo\" src=...> inside .doc-head for both DiCo and DiRi branches, and document/[id].tsx line 41 passes company.logo_uri converted to a data URI into generateHtml). Logo persistence (dico_company.logo_uri) and all testIDs required by the request are present. Browser session is per-invocation so all persistence tests ran inside the same session.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_results_detail": {
+    "materiali_templates": {
+      "T1_save_disabled_when_empty": "PASS - tapping template-materiali-save with 0 rows does not open the save sheet",
+      "T2_save_confirmation_msg": "PASS - 'Modello salvato ✓' is rendered in template-materiali-msg after confirm",
+      "T3_persisted_to_storage": "PASS - dico_templates localStorage key contains {kind:'materiali', nome:'TEST_MatModel', data:[...]}",
+      "T6_item_visible_in_load_sheet": "PASS - template-item-0 renders in new DiCo",
+      "T7_apply_adds_rows": "PASS - MaterialsTable gets the saved rows after tap",
+      "T8_apply_appends_not_replaces": "PASS - second apply appends with new ids (rows>=4)",
+      "T9_template_close_dismisses": "PASS",
+      "T10_template_delete_0_removes_item": "PASS"
+    },
+    "schema_templates": {
+      "T4_return_from_schema_editor": "PASS - after schema-save returns to wizard step 2 with template-schema-save present",
+      "T5_schema_persisted": "PASS - dico_templates localStorage key gets kind:'schema' entry",
+      "T11_schema_template_visible": "PASS",
+      "T12_apply_renders_thumbnail": "PASS - [data-testid=open-schema] contains an inline svg after apply"
+    },
+    "company_logo": {
+      "T13_pick_card_visible": "PASS - company-logo-pick is rendered in Profile 'Logo ditta' Card",
+      "T14_image_change_remove_visible_after_pick": "PASS - using page.expect_file_chooser + set_files to inject /tmp/test_logo.png",
+      "T15_logo_uri_persisted_immediately": "PASS - dico_company.logo_uri is written on pick (saveCompany.mutateAsync fired from LogoPicker.onChange)",
+      "T16_remove_clears_logo": "PASS - tapping company-logo-remove clears the image and reveals the pick slot again"
+    },
+    "pdf_html": {
+      "T17_img_logo_in_doc_head": "VERIFIED_BY_CODE_REVIEW - cannot be scraped on web preview (expo-print uses an inline iframe + browser Print API). Code shows the logo tag is always inserted when logoDataUri is passed. Should be re-verified on-device.",
+      "T18_logo_embedded_as_data_uri": "VERIFIED_BY_CODE_REVIEW - document/[id].tsx converts company.logo_uri via toDataUri before passing to generateHtml."
+    },
+    "regression": {
+      "T19_backup_export_still_works": "PASS - clicking export-backup-button triggers download 'dicopro-backup-20261021-xxxx.json'",
+      "T20_home_logo_renders": "PASS - [data-testid=home-logo] visible on dashboard after reload"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_1.json",
+    "/app/test_reports/iteration_2.json",
+    "/app/test_reports/iteration_3.json"
+  ],
+  "action_items": [
+    "Non-blocking: on-device validation needed for the PDF logo (test on an actual Expo build / physical device by exporting a PDF and visually confirming the company logo appears in the top-left of DiCo and DiRi). Web preview cannot inspect the generated iframe used by expo-print.",
+    "Minor polish (optional): TemplateBar success message says 'Modello salvato ✓' only after save, but there is no analogous confirmation when a template is applied in save mode (apply shows 'Modello X applicato ✓' as expected). Already fine.",
+    "Minor note: react-native-web renders TextField as a bare <input> (not <div data-testid><input/></div>) when the TextField component is a thin wrapper. Playwright must use page.fill('[data-testid=template-name-input]', value) directly - no inner 'input' selector."
+  ],
+  "critical_code_review_comments": [
+    "db.ts: new K_TEMPLATES key with listTemplates/saveTemplate/deleteTemplate is sound. ArchiveT.templates is optional in the type - exportAll and importAll both handle the field, so backup regression is OK.",
+    "LogoPicker uses expo-image-picker.launchImageLibraryAsync which creates a file input on web - verified via expect_file_chooser. On native the UI will prompt for photo-library permission; the 'blocked' fallback (logo-open-settings) is correctly wired.",
+    "document/[id].tsx (useEffect) correctly recomputes html when either doc or company changes, so an updated logo propagates to the preview without needing a reload.",
+    "generateHtml CSS places .logo as a float:left on .doc-head with max-height 56px / max-width 140px which should render well on both DiCo and DiRi headers.",
+    "TemplateBar canSave logic: materiali uses rows.length>0 and schema uses !isEmptySchema(schema); both correctly disable the save button.",
+    "No deprecated expo packages (expo-av/expo-barcode-scanner/expo-background-fetch) introduced in this iteration. Still using expo-image, expo-image-picker, expo-print, expo-file-system (legacy entry) which is acceptable."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (fully offline, no backend)", "frontend": "18/19 automated UI checks (94.7%). 2 PDF HTML checks fall back to code review on web preview; one in-UI run of each new flow passes end-to-end." },
+  "seed_data_creation": "Browser session only (not persistent across invocations): one 'TEST_MatModel' materiali template (then deleted via template-delete-0), one 'TEST_SchemaModel' schema template, one TEST_LogoCo company with uploaded /tmp/test_logo.png logo, two DICO-2026-0001 documents generated during flow. Nothing to clean up server-side.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Add to the standard testID list from iteration_2: company-logo-pick, company-logo-image, company-logo-change, company-logo-remove, logo-open-settings, template-materiali-load, template-materiali-save, template-materiali-msg, template-schema-load, template-schema-save, template-schema-msg, template-name-input (BARE <input> on web - use page.fill directly), template-save-confirm, template-item-{index}, template-delete-{index}, template-close, open-schema, schema-save, schema-cancel, schema-canvas, add-symbol-{key}, start-line, add-label, swatch-{color}. The web storage wrapper double-stringifies: localStorage values are JSON-encoded TWICE (storage.setItem wraps the already-JSON-string from writeJson), so decode with: let v=JSON.parse(raw); if (typeof v==='string') v=JSON.parse(v);  Expo-print on web is NOT inspectable from Playwright - its iframe is sandboxed. Use code review for PDF-content checks or run on-device. page.expect_file_chooser works for expo-image-picker on web.",
+  "rca_of_issue": "N/A - no bugs reproduced in this iteration. Only one caveat is the inability to inspect the PDF output on web (expo-print architectural limitation, not a bug)."
+}

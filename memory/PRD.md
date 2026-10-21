@@ -92,3 +92,7 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 - Logo utente "DI.CO Impianti Certificati" usato come icona app, adaptive icon, splash, favicon e logo nella Home
 - Palette aggiornata ai colori del logo: blu #0A56AC primario, verde #3A9A50 successo, arancio #E8801E avviso; PDF con accenti blu
 - Nome app: DiCo Impianti
+
+## Modelli ricorrenti + Logo ditta (Jun 2026)
+- Templates locali (dico_templates): salva/usa modelli per relazione materiali (append righe) e schema (sostituisce) nel wizard DiCo; inclusi nel backup
+- Logo ditta in Profilo (un tocco, galleria), salvato in company.logo_uri, stampato in intestazione di tutti i PDF DiCo/DiRi; incluso nel backup

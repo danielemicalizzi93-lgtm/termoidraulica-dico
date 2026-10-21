@@ -81,6 +81,8 @@ const STYLE = `
   .doc-head { border-bottom: 3px solid #0A56AC; padding-bottom: 10px; margin-bottom: 16px; }
   .doc-head h1 { font-size: 17px; margin: 0 0 2px; color: #1C1C1A; }
   .doc-head .law { font-size: 10px; color: #73736D; }
+  .doc-head::after { content: ""; display: block; clear: both; }
+  .doc-head .logo { float: left; max-height: 56px; max-width: 140px; margin-right: 12px; object-fit: contain; }
   .doc-head .num { float: right; font-size: 11px; font-weight: 700; color: #0A56AC; }
   .section { margin-bottom: 14px; }
   .s-title { background: #E3EDF9; color: #0A56AC; font-weight: 700; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; }
@@ -162,8 +164,13 @@ function fotoSection(d: AnyData): string {
   return `<div class="section foto-section"><div class="s-title">Allegati fotografici</div><div class="foto-grid">${imgs}</div></div>`;
 }
 
-export function generateHtml(doc: { tipo: string; numero: string; data: AnyData }, company: AnyData): string {
+export function generateHtml(
+  doc: { tipo: string; numero: string; data: AnyData },
+  company: AnyData,
+  logoDataUri?: string,
+): string {
   const d = doc.data || {};
+  const logo = logoDataUri ? `<img class="logo" src="${esc(logoDataUri)}" />` : "";
   const committente = d.committente?.nome || "";
 
   if (doc.tipo === "dico") {
@@ -180,6 +187,7 @@ export function generateHtml(doc: { tipo: string; numero: string; data: AnyData 
 
     return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
       <div class="doc-head">
+        ${logo}
         <span class="num">N. ${esc(doc.numero)}</span>
         <h1>Dichiarazione di Conformità</h1>
         <div class="law">dell'impianto alla regola dell'arte — D.M. 22 gennaio 2008, n. 37 (art. 7)</div>
@@ -220,6 +228,7 @@ export function generateHtml(doc: { tipo: string; numero: string; data: AnyData 
 
   return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
     <div class="doc-head">
+      ${logo}
       <span class="num">N. ${esc(doc.numero)}</span>
       <h1>Dichiarazione di Rispondenza</h1>
       <div class="law">D.M. 22 gennaio 2008, n. 37 — art. 7, comma 6</div>

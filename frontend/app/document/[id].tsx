@@ -38,8 +38,9 @@ export default function DocumentDetail() {
         foto.map(async (f: any) => ({ ...f, dataUri: await toDataUri(f.uri) })),
       );
       const data = { ...doc.data, allegati_foto: resolved };
+      const logo = company?.logo_uri ? await toDataUri(company.logo_uri) : undefined;
       if (active) {
-        setHtml(generateHtml({ ...doc, data }, doc.data?.impresa || company || {}));
+        setHtml(generateHtml({ ...doc, data }, doc.data?.impresa || company || {}, logo));
       }
     })();
     return () => {

@@ -10,6 +10,7 @@ import { useLock } from "@/src/local/lock-context";
 import { applyBackup, backupSummary, exportBackup, pickBackup, type BackupPayload } from "@/src/local/backup";
 import { Button, Card, CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { ScreenHeader } from "@/src/components/header";
+import { LogoPicker } from "@/src/components/logo-picker";
 import { ABILITAZIONI } from "@/src/constants/dico";
 import { usesNativeTabs } from "@/src/navigation";
 import { makeStyles, spacing, useTheme } from "@/src/theme";
@@ -241,6 +242,18 @@ export default function ProfileScreen() {
               {backupMsg}
             </Text>
           ) : null}
+        </Card>
+
+        <Text style={styles.heading}>Logo ditta</Text>
+        <Card>
+          <LogoPicker
+            value={form.logo_uri}
+            onChange={async (uri) => {
+              const next = { ...form, logo_uri: uri };
+              setForm(next);
+              await saveCompany.mutateAsync(next);
+            }}
+          />
         </Card>
 
         <Text style={styles.heading}>Dati impresa installatrice</Text>
