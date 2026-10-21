@@ -24,7 +24,18 @@ export default function Dashboard() {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={impresa || "Le tue dichiarazioni"} subtitle="Crea una nuova dichiarazione" />
+      <ScreenHeader
+        title={impresa || "Le tue dichiarazioni"}
+        subtitle="Crea una nuova dichiarazione"
+        left={
+          <Image
+            testID="home-logo"
+            source={require("@/assets/images/logo.png")}
+            style={styles.logo}
+            contentFit="contain"
+          />
+        }
+      />
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, paddingBottom: bottomChrome + spacing.xl, gap: spacing.lg }}
         showsVerticalScrollIndicator={false}
@@ -109,6 +120,7 @@ export default function Dashboard() {
 
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
+  logo: { width: 52, height: 52, borderRadius: radius.pill },
   quickRow: { flexDirection: "row", gap: spacing.md },
   quick: {
     flex: 1,

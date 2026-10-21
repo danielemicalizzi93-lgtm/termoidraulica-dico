@@ -78,12 +78,12 @@ function section(title: string, inner: string): string {
 const STYLE = `
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1C1C1A; font-size: 11px; margin: 0; padding: 28px 32px; }
-  .doc-head { border-bottom: 3px solid #C54B3C; padding-bottom: 10px; margin-bottom: 16px; }
+  .doc-head { border-bottom: 3px solid #0A56AC; padding-bottom: 10px; margin-bottom: 16px; }
   .doc-head h1 { font-size: 17px; margin: 0 0 2px; color: #1C1C1A; }
   .doc-head .law { font-size: 10px; color: #73736D; }
-  .doc-head .num { float: right; font-size: 11px; font-weight: 700; color: #C54B3C; }
+  .doc-head .num { float: right; font-size: 11px; font-weight: 700; color: #0A56AC; }
   .section { margin-bottom: 14px; }
-  .s-title { background: #F5DFDC; color: #C54B3C; font-weight: 700; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; }
+  .s-title { background: #E3EDF9; color: #0A56AC; font-weight: 700; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 4px 6px; vertical-align: top; border-bottom: 1px solid #E3E3E0; }
   td.lbl { width: 38%; color: #73736D; }
@@ -103,7 +103,7 @@ const STYLE = `
   table.mat td { font-size: 10px; }
   table.mat tr.mh td { background: #F0F0EE; font-weight: 700; color: #1C1C1A; }
   table.mtot { margin-top: 6px; }
-  table.mtot-grand td, tr.mtot-grand td { background: #F5DFDC; font-weight: 800; color: #C54B3C; }
+  table.mtot-grand td, tr.mtot-grand td { background: #E3EDF9; font-weight: 800; color: #0A56AC; }
   .schema { width: 100%; border: 1px solid #E3E3E0; border-radius: 6px; padding: 6px; }
   .schema svg { width: 100%; height: auto; display: block; }
 `;
