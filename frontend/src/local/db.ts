@@ -221,7 +221,7 @@ export async function deleteDocument(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 // Templates (reusable materials lists and schemas)
 // ---------------------------------------------------------------------------
-export type TemplateKind = "materiali" | "schema";
+export type TemplateKind = "materiali" | "schema" | "dico";
 export type TemplateT = {
   id: string;
   kind: TemplateKind;

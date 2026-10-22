@@ -116,6 +116,46 @@ export default function DiCoWizard() {
     }
   }, [existing]);
 
+  const fullTemplate = () => ({
+    intervento,
+    intervento_altro: interventoAltro,
+    uso_edificio: usoEdificio,
+    progetto_da: progettoDa,
+    progettista_nome: progettistaNome,
+    progettista_albo: progettistaAlbo,
+    tipologie,
+    descrizione_impianto: descrizione,
+    norme_tecniche: norme,
+    materiali_rows: materialiRows,
+    schema,
+    allegati,
+    allegati_facoltativi: allegatiFac,
+  });
+  const applyFull = (t: { data: any }) => {
+    const d = JSON.parse(JSON.stringify(t.data || {}));
+    setIntervento(d.intervento ?? "nuovo");
+    setInterventoAltro(d.intervento_altro ?? "");
+    setUsoEdificio(d.uso_edificio ?? "civile");
+    setProgettoDa(d.progetto_da ?? "responsabile");
+    setProgettistaNome(d.progettista_nome ?? "");
+    setProgettistaAlbo(d.progettista_albo ?? "");
+    setTipologie(d.tipologie ?? []);
+    setDescrizione(d.descrizione_impianto ?? "");
+    setNorme(d.norme_tecniche ?? "");
+    setMaterialiRows(((d.materiali_rows ?? []) as MaterialRow[]).map((r) => ({ ...r, id: uid() })));
+    setSchema(d.schema ?? null);
+    setAllegati(d.allegati ?? []);
+    setAllegatiFac(d.allegati_facoltativi ?? "");
+  };
+  const fullBar = (
+    <TemplateBar
+      kind="dico"
+      canSave={tipologie.length > 0}
+      getData={fullTemplate}
+      onApply={applyFull}
+    />
+  );
+
   const setU = (k: string, v: string) => setUb((o) => ({ ...o, [k]: v }));
   const toggle = (list: string[], set: (v: string[]) => void, key: string) =>
     set(list.includes(key) ? list.filter((x) => x !== key) : [...list, key]);
@@ -170,6 +210,7 @@ export default function DiCoWizard() {
       allegati_foto: foto,
       luogo,
       data_dichiarazione: dataIso,
+      firme: editing ? existing?.data?.firme : undefined,
     };
     if (editing && id) {
       await updateDoc.mutateAsync({ id, data });
@@ -193,6 +234,8 @@ export default function DiCoWizard() {
     >
       {step === 0 ? (
         <>
+          <SectionLabel>Modello DiCo completo</SectionLabel>
+          {fullBar}
           <SectionLabel>Committente</SectionLabel>
           {clients && clients.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
@@ -342,6 +385,8 @@ export default function DiCoWizard() {
             keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
             testID="dico-data"
           />
+          <SectionLabel>Salva questa DiCo come modello</SectionLabel>
+          {fullBar}
         </>
       ) : null}
     </WizardShell>

@@ -8,6 +8,7 @@ import { WebView } from "react-native-webview";
 import { useCompany, useDeleteDocument, useDocument } from "@/src/api/hooks";
 import { toDataUri } from "@/src/local/attachments";
 import { Button } from "@/src/components/ui";
+import { SignaturesCard } from "@/src/components/signatures-card";
 import { INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
 import { generateHtml } from "@/src/pdf/document-html";
 import { generateCnaHtml } from "@/src/pdf/cna-html";
@@ -110,6 +111,9 @@ export default function DocumentDetail() {
           />
           <Row label="Data" value={d.luogo ? `${d.luogo}` : undefined} />
         </View>
+
+        <Text style={styles.previewLabel}>Firme</Text>
+        <SignaturesCard doc={doc} company={company || {}} />
 
         <Text style={styles.previewLabel}>Modello PDF</Text>
         <View style={styles.seg}>

@@ -150,6 +150,7 @@ export default function DiRiWizard() {
       diri_allegati: diriAllegati,
       allegati_altro: allegatiAltro,
       allegati_foto: foto,
+      firme: existing?.data?.firme,
       luogo,
       data_dichiarazione: dataIso,
     };

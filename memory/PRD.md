@@ -108,3 +108,9 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 - app.json android: solo CAMERA; blockedPermissions READ_MEDIA_IMAGES/VIDEO, READ/WRITE_EXTERNAL_STORAGE, RECORD_AUDIO; image-picker microphonePermission false
 - Immagine Home locale (assets/images/home-hero.jpg)
 - Pagina /privacy (Informativa privacy) con link in Profilo; URL pubblico = <url pubblicato>/privacy
+
+## Firme + Modelli DiCo completi (Jun 2026)
+- SignatureModal (PanResponder + react-native-svg), firme salvate come path SVG in doc.data.firme {dichiarante, responsabile, cliente{name,date}}
+- Dettaglio documento: card Firme (DiCo: titolare, responsabile tecnico, ricevuta cliente; DiRi: dichiarante, committente); stampate nei box firma CNA e nel modello app; ricevuta cliente con nome e data automatici (campi 14-15-16)
+- Wizard preservano firme in modifica
+- Template kind "dico": salva/usa DiCo completa (intervento, uso, progetto, tipologie, descrizione, norme, materiali, schema, allegati) nel passo 1 e nel passo finale

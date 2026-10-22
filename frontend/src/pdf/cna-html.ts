@@ -21,6 +21,14 @@ function cb(checked: boolean): string {
   return `<span class="cb">${checked ? "✓" : ""}</span>`;
 }
 
+// Inline SVG of a hand-drawn signature (or empty space)
+function sig(s: AnyData | undefined, h = 34): string {
+  if (!s?.paths?.length) return `<div style="height:${h}px"></div>`;
+  return `<svg class="sig" viewBox="0 0 ${s.w} ${s.h}" preserveAspectRatio="xMidYMid meet" style="height:${h}px;width:100%">${s.paths
+    .map((d: string) => `<path d="${esc(d)}" stroke="#0B2F5E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)
+    .join("")}</svg>`;
+}
+
 function fmtDate(iso?: string): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -129,6 +137,7 @@ export function generateCnaHtml(
   const u = d.ubicazione || {};
   const logo = logoDataUri ? `<img class="logo" src="${esc(logoDataUri)}" />` : "";
   const proprieta = u.proprieta || d.committente?.nome || "";
+  const fi: AnyData = d.firme || {};
 
   if (doc.tipo === "dico") {
     const att: string[] = d.allegati || [];
@@ -180,12 +189,12 @@ export function generateCnaHtml(
       <div>Ogni responsabilità per sinistri a persone o a cose derivanti da manomissione dell’impianto da parte di terzi ovvero da carenza di manutenzione o riparazione.</div>
       <div class="signs">
         <div>Data ${f(fmtDate(d.data_dichiarazione), 90)}</div>
-        <div class="signbox">Il responsabile tecnico<div class="small">(Firma Leggibile senza timbro) (13)</div><div class="sline"></div></div>
-        <div class="sign">Il dichiarante<div class="small">(Timbro e Firma Leggibile)</div><div class="sline"></div></div>
+        <div class="signbox">Il responsabile tecnico<div class="small">(Firma Leggibile senza timbro) (13)</div>${sig(fi.responsabile)}<div class="sline" style="margin-top:0"></div></div>
+        <div class="sign">Il dichiarante<div class="small">(Timbro e Firma Leggibile)</div>${sig(fi.dichiarante)}<div class="sline" style="margin-top:0"></div></div>
       </div>
       <div class="warn"><b>AVVERTENZE PER IL COMMITTENTE:</b> il committente o proprietario è tenuto ad affidare i lavori di installazione, di trasformazione, di ampliamento e di manutenzione degli impianti ad imprese abilitate</div>
-      <p style="margin-top:6px">il sottoscritto <span class="small">(14)</span> ${f("", 220)}<br/>committente dei lavori, dichiara di aver ricevuto copia della presente, corredata degli allegati indicati in data <span class="small">(15)</span> ${f("", 90)}</p>
-      <div style="text-align:right;margin-right:40px">Il Cliente <span class="small">(16)</span><div style="width:150px;margin-left:auto" class="sline"></div><div class="small">(firma per ricevuta)</div></div>
+      <p style="margin-top:6px">il sottoscritto <span class="small">(14)</span> ${f(fi.cliente?.name, 220)}<br/>committente dei lavori, dichiara di aver ricevuto copia della presente, corredata degli allegati indicati in data <span class="small">(15)</span> ${f(fi.cliente ? fmtDate(fi.cliente.date) : "", 90)}</p>
+      <div style="text-align:right;margin-right:40px">Il Cliente <span class="small">(16)</span><div style="width:170px;margin-left:auto">${sig(fi.cliente, 30)}<div class="sline" style="margin-top:0"></div></div><div class="small">(firma per ricevuta)</div></div>
       <div class="foot">Confederazione Nazionale Artigianato e delle piccole medie imprese - Rev 01-2023</div>
     </div>
     ${annexes(d, "dico")}
@@ -226,10 +235,10 @@ export function generateCnaHtml(
     <div>ogni responsabilità per sinistri a persone o a cose successivi alla presente dichiarazione e derivanti da manomissione dell’impianto da parte di terzi ovvero da carenze di manutenzione o riparazione.</div>
     <div class="signs" style="margin-top:14px">
       <div>data ${f(fmtDate(d.data_dichiarazione), 120)}</div>
-      <div class="sign"><b>il dichiarante</b><div class="sline"></div><div>(timbro e firma)</div></div>
+      <div class="sign"><b>il dichiarante</b>${sig(fi.dichiarante)}<div class="sline" style="margin-top:0"></div><div>(timbro e firma)</div></div>
     </div>
     <div class="warn">Avvertenze per il committente: il proprietario dell’impianto ha l’obbligo di mantenere la sicurezza e l’efficienza dell’impianto, tenendo conto delle istruzioni per l’uso e manutenzione fornite dall’installatore ed affidando i lavori esclusivamente ad imprese abilitate.</div>
-    <p style="margin-top:22px"><b>Il committente</b> (firma per ricevuta) ${f("", 180)}</p>
+    <div style="margin-top:18px;display:flex;align-items:flex-end;gap:8px"><b>Il committente</b> (firma per ricevuta) <div style="width:190px">${sig(fi.cliente, 30)}<div class="sline" style="margin-top:0"></div></div>${fi.cliente ? `<span class="small">${esc(fi.cliente.name || "")} · ${fmtDate(fi.cliente.date)}</span>` : ""}</div>
   </div>
   ${annexes(d, "diri")}
   </body></html>`;

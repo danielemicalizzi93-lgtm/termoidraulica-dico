@@ -30,7 +30,7 @@ export function TemplateBar({
   const [nome, setNome] = useState("");
   const [msg, setMsg] = useState("");
 
-  const what = kind === "materiali" ? "materiali" : "schema";
+  const what = kind === "materiali" ? "materiali" : kind === "schema" ? "schema" : "DiCo completa";
 
   const doSave = async () => {
     if (!nome.trim()) return;
@@ -93,7 +93,7 @@ export function TemplateBar({
                 label="Nome del modello"
                 value={nome}
                 onChangeText={setNome}
-                placeholder={kind === "materiali" ? "es. Bagno standard multistrato" : "es. Caldaia + radiatori"}
+                placeholder={kind === "materiali" ? "es. Bagno standard multistrato" : kind === "schema" ? "es. Caldaia + radiatori" : "es. Sostituzione caldaia a metano"}
                 autoFocus
               />
               <Button
@@ -108,7 +108,7 @@ export function TemplateBar({
             <ScrollView style={styles.list} contentContainerStyle={{ gap: spacing.sm }}>
               {templates.length === 0 ? (
                 <Text style={styles.empty}>
-                  Nessun modello salvato. Compila {kind === "materiali" ? "la relazione materiali" : "uno schema"} e
+                  Nessun modello salvato. Compila {kind === "materiali" ? "la relazione materiali" : kind === "schema" ? "uno schema" : "una DiCo"} e
                   tocca “Salva come modello”.
                 </Text>
               ) : (
@@ -119,7 +119,9 @@ export function TemplateBar({
                       <Text style={styles.itemSub}>
                         {kind === "materiali"
                           ? `${(t.data || []).length} voci`
-                          : `${(t.data?.elements || []).length} elementi`}
+                          : kind === "schema"
+                            ? `${(t.data?.elements || []).length} elementi`
+                            : `${(t.data?.tipologie || []).length} tipologie · ${(t.data?.materiali_rows || []).length} materiali`}
                       </Text>
                     </Pressable>
                     <Pressable testID={`template-delete-${i}`} onPress={() => delT.mutate(t.id)} hitSlop={10} style={styles.del}>

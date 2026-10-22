@@ -56,6 +56,14 @@ function esc(s: any): string {
     .replace(/>/g, "&gt;");
 }
 
+function sigSvg(s: AnyData | undefined): string {
+  if (!s?.paths?.length) return "";
+  return `<svg viewBox="0 0 ${s.w} ${s.h}" preserveAspectRatio="xMidYMid meet" style="height:40px;width:100%;display:block">${s.paths
+    .map((d: string) => `<path d="${esc(d)}" stroke="#0B2F5E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)
+    .join("")}</svg>`;
+}
+
+
 function fmtDate(iso?: string): string {
   if (!iso) return "__________";
   const d = new Date(iso);
@@ -96,6 +104,7 @@ const STYLE = `
   .sign { margin-top: 28px; display: flex; justify-content: space-between; }
   .sign .box { width: 45%; text-align: center; }
   .sign .line { border-top: 1px solid #1C1C1A; margin-top: 36px; padding-top: 4px; font-size: 10px; color: #73736D; }
+  .sign svg + .line { margin-top: 0; }
   .place { margin-top: 18px; font-size: 11px; }
   .foto-section { margin-top: 18px; }
   .foto-grid { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -214,9 +223,10 @@ export function generateHtml(
       ${fotoSection(d)}
       <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>
       <div class="sign">
-        <div class="box"><div class="line">Il responsabile tecnico</div></div>
-        <div class="box"><div class="line">Il dichiarante (timbro e firma)</div></div>
+        <div class="box">${sigSvg(d.firme?.responsabile)}<div class="line">Il responsabile tecnico</div></div>
+        <div class="box">${sigSvg(d.firme?.dichiarante)}<div class="line">Il dichiarante (timbro e firma)</div></div>
       </div>
+      ${d.firme?.cliente ? `<div class="sign"><div class="box"></div><div class="box">${sigSvg(d.firme.cliente)}<div class="line">Per ricevuta il cliente: ${esc(d.firme.cliente.name || "")} — ${fmtDate(d.firme.cliente.date)}</div></div></div>` : ""}
     </body></html>`;
   }
 
@@ -252,8 +262,8 @@ export function generateHtml(
     ${fotoSection(d)}
     <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>
     <div class="sign">
-      <div class="box"></div>
-      <div class="box"><div class="line">Il tecnico (timbro e firma)</div></div>
+      <div class="box">${d.firme?.cliente ? `${sigSvg(d.firme.cliente)}<div class="line">Il committente: ${esc(d.firme.cliente.name || "")} — ${fmtDate(d.firme.cliente.date)}</div>` : ""}</div>
+      <div class="box">${sigSvg(d.firme?.dichiarante)}<div class="line">Il tecnico (timbro e firma)</div></div>
     </div>
   </body></html>`;
 }
