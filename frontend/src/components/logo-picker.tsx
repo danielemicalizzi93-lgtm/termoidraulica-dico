@@ -1,8 +1,7 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ImageSquare, Trash } from "phosphor-react-native";
-import { useState } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { persistImage, removeImage } from "@/src/local/attachments";
 import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
@@ -11,15 +10,8 @@ import { makeStyles, radius, spacing, useTheme } from "@/src/theme";
 export function LogoPicker({ value, onChange }: { value?: string; onChange: (uri: string) => void }) {
   const styles = useStyles();
   const { colors } = useTheme();
-  const [blocked, setBlocked] = useState(false);
-
+  // System photo picker: no gallery permission needed.
   const pick = async () => {
-    setBlocked(false);
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted && !perm.canAskAgain) {
-      setBlocked(true);
-      return;
-    }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
     if (res.canceled || !res.assets?.length) return;
     const uri = await persistImage(res.assets[0].uri);
@@ -56,11 +48,6 @@ export function LogoPicker({ value, onChange }: { value?: string; onChange: (uri
               <Text style={styles.removeText}>Rimuovi</Text>
             </Pressable>
           </View>
-        ) : null}
-        {blocked ? (
-          <Pressable testID="logo-open-settings" onPress={() => Linking.openSettings()}>
-            <Text style={styles.link}>Consenti accesso foto nelle impostazioni</Text>
-          </Pressable>
         ) : null}
       </View>
     </View>

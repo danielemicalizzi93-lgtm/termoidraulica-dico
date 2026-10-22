@@ -38,6 +38,7 @@ function RootGate() {
       <Stack.Screen name="schema" options={{ presentation: "fullScreenModal" }} />
       <Stack.Screen name="client/[id]" options={{ presentation: "modal" }} />
       <Stack.Screen name="installation/[id]" options={{ presentation: "modal" }} />
+      <Stack.Screen name="privacy" />
     </Stack>
   );
 }

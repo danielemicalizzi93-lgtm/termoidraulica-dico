@@ -22,8 +22,14 @@
       },
       "package": "com.emergent.termoidraulicadico.og52uz",
       "permissions": [
-        "CAMERA",
-        "READ_MEDIA_IMAGES"
+        "CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -48,7 +54,8 @@
         "expo-image-picker",
         {
           "photosPermission": "Allega foto e scansioni ai documenti",
-          "cameraPermission": "Scatta foto da allegare alle dichiarazioni"
+          "cameraPermission": "Scatta foto da allegare alle dichiarazioni",
+          "microphonePermission": false
         }
       ],
       "expo-secure-store",

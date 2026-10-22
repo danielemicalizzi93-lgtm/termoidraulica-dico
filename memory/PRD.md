@@ -102,3 +102,9 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 - Dettaglio documento: selettore "Modello CNA" (default) / "Modello app" per anteprima ed esportazione
 - Nuovi campi: impresa (settore, civico, albo artigiani prov/n.), DiCo (n. civico, intervento altro, uso edificio, progetto redatto da + progettista/albo, allegato materiali non normalizzati), DiRi (civico, richiesta di, impianto accertato, anno realizzazione, uso edificio, allegati relazione verifica/certificato/altro)
 - Profilo: campi separati "Titolare / legale rappresentante" (company.titolare) e "Responsabile tecnico (anche esterno)"; DiCo CNA usa il titolare come sottoscritto, DiRi usa il responsabile tecnico
+
+## Play Store fixes (Jun 2026)
+- Allegati: pulsante "Scatta foto" (fotocamera, permesso controllato prima di richiederlo) + Galleria via selettore di sistema senza permessi
+- app.json android: solo CAMERA; blockedPermissions READ_MEDIA_IMAGES/VIDEO, READ/WRITE_EXTERNAL_STORAGE, RECORD_AUDIO; image-picker microphonePermission false
+- Immagine Home locale (assets/images/home-hero.jpg)
+- Pagina /privacy (Informativa privacy) con link in Profilo; URL pubblico = <url pubblicato>/privacy

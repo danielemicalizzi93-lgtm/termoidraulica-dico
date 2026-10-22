@@ -33,7 +33,8 @@ export function AttachmentPicker({
 
   const fromCamera = async () => {
     setBlocked(null);
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    let perm = await ImagePicker.getCameraPermissionsAsync();
+    if (!perm.granted && perm.canAskAgain) perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
       setBlocked(
         perm.canAskAgain
@@ -51,13 +52,9 @@ export function AttachmentPicker({
     }
   };
 
+  // Uses the system photo picker: no gallery permission needed.
   const fromLibrary = async () => {
     setBlocked(null);
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted && !perm.canAskAgain) {
-      setBlocked("Abilita l'accesso alle foto dalle impostazioni.");
-      return;
-    }
     setBusy(true);
     try {
       const res = await ImagePicker.launchImageLibraryAsync({
@@ -99,7 +96,7 @@ export function AttachmentPicker({
       <View style={styles.actions}>
         <Button
           testID="attach-camera"
-          title="Fotocamera"
+          title="Scatta foto"
           variant="secondary"
           onPress={fromCamera}
           loading={busy}

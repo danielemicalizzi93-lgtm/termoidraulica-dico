@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { DownloadSimple, LockKey, UploadSimple } from "phosphor-react-native";
+import { router } from "expo-router";
+import { DownloadSimple, LockKey, ShieldCheck, UploadSimple } from "phosphor-react-native";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -330,6 +331,11 @@ export default function ProfileScreen() {
           onPress={onSave}
           loading={saveCompany.isPending}
         />
+
+        <Pressable testID="privacy-link" style={styles.privacyRow} onPress={() => router.push("/privacy")}>
+          <ShieldCheck color={colors.brandPrimary} size={20} weight="bold" />
+          <Text style={styles.privacyText}>Informativa privacy</Text>
+        </Pressable>
       </KeyboardAwareScrollView>
     </View>
   );
@@ -338,6 +344,8 @@ export default function ProfileScreen() {
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
   heading: { fontSize: 16, fontWeight: "700", color: colors.onSurface },
+  privacyRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, minHeight: 48 },
+  privacyText: { color: colors.brandPrimary, fontWeight: "700", fontSize: 15 },
   fields: { gap: spacing.md },
   rowFields: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-end" },
   pinRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },

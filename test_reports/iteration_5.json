@@ -1,0 +1,23 @@
+{
+  "summary": "Frontend-only mobile viewport (390x844) testing of attachments picker, logo picker, home empty-state hero image, privacy screen and app.json permission hygiene. All 5 requested checks PASS. DiCo and DiRi wizards render 'Scatta foto' (attach-camera) and 'Galleria' (attach-library) on the attachments step; Galleria opens the system file chooser on web with accept=image/* and multiple=true, with no permission prompt; selecting an image adds a thumbnail with testID remove-attachment-*. 'Scatta foto' on web opens a single-file chooser (expo-image-picker launchCameraAsync falls back to a file input on web) without crashing. Profile logo picker opens a single-file chooser (no permission step) and renders company-logo-image after selection. Home empty state renders home-hero-image from the bundled local asset (served via Metro assets URL, no unsplash). Profile 'Informativa privacy' link navigates to /privacy with all 8 expected sections (In sintesi, Dati trattati, Fotocamera e foto, Condivisione, Sicurezza, Conservazione e cancellazione, Analisi e pubblicità, Contatti); privacy-back returns to Profile; direct URL /privacy also loads. Static app.json confirms android.permissions=['CAMERA'] only, blockedPermissions includes READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, RECORD_AUDIO; expo-image-picker plugin has microphonePermission:false and iOS NSCameraUsageDescription / NSPhotoLibraryUsageDescription are set. No deprecated expo-av/expo-barcode-scanner/expo-background-fetch usage found. No React Native red screen or runtime errors observed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_5.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: web file input accept attribute shows ',image/*' (leading comma) coming from expo-image-picker's web mediaTypes mapping. Harmless but could be reported upstream; nothing to change in the app.",
+    "Privacy screen hard-codes 'Ultimo aggiornamento: giugno 2026' - keep this in sync with real publication date before store submission."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "100%"},
+  "seed_data_creation": "No seed data created; cleared localStorage once to verify empty-state hero image rendering.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "App has no login (fully offline AsyncStorage). To exercise the DiCo wizard attachments step: open /wizard/dico, click wizard-next, then on step 2 tick [data-testid=plant-a] before clicking wizard-next (validation requires >=1 tipologia); AttachmentPicker lives on step index 3 (Passo 4 di 4). DiRi: same, tipologia check is on step index 2 so advance twice before ticking plant-a. Use page.expect_file_chooser to validate attach-library / company-logo-pick open the native picker; attach-camera on web also triggers a file_chooser (single file).",
+  "rca_of_issue": "N/A - no bugs."
+}

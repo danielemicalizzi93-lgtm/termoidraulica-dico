@@ -82,9 +82,8 @@ export default function Dashboard() {
         ) : recent.length === 0 ? (
           <View style={styles.empty} testID="dashboard-empty">
             <Image
-              source={{
-                uri: "https://images.unsplash.com/photo-1542621334-a254cf47733d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxibHVlcHJpbnQlMjB0ZWNobmljYWwlMjBkcmF3aW5nfGVufDB8fHx8MTc5MTkyMzEzMXww&ixlib=rb-4.1.0&q=85",
-              }}
+              testID="home-hero-image"
+              source={require("@/assets/images/home-hero.jpg")}
               style={styles.emptyImg}
               contentFit="cover"
             />
