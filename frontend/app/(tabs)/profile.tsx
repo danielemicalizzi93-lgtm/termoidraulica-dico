@@ -260,7 +260,8 @@ export default function ProfileScreen() {
         <Card>
           <View style={styles.fields}>
             <TextField label="Denominazione impresa" value={form.denominazione} onChangeText={(v) => set("denominazione", v)} testID="field-denominazione" />
-            <TextField label="Responsabile tecnico" value={form.responsabile_tecnico} onChangeText={(v) => set("responsabile_tecnico", v)} />
+            <TextField label="Titolare / legale rappresentante" value={form.titolare} onChangeText={(v) => set("titolare", v)} placeholder="Nome e cognome del titolare" testID="field-titolare" />
+            <TextField label="Responsabile tecnico (anche esterno)" value={form.responsabile_tecnico} onChangeText={(v) => set("responsabile_tecnico", v)} placeholder="Nome e cognome del responsabile tecnico" testID="field-responsabile" />
             <TextField label="Partita IVA" value={form.partita_iva} onChangeText={(v) => set("partita_iva", v)} keyboardType="number-pad" />
             <TextField label="Codice Fiscale" value={form.codice_fiscale} onChangeText={(v) => set("codice_fiscale", v)} autoCapitalize="characters" />
             <TextField label="Operante nel settore" value={form.settore} onChangeText={(v) => set("settore", v)} placeholder="es. termoidraulico" testID="field-settore" />

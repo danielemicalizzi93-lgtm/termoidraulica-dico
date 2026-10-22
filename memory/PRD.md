@@ -101,3 +101,4 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 - src/pdf/cna-html.ts ricrea fedelmente i modelli CNA DiCo (Rev 01-2023) e DiRi, compilati con i dati; allegati (materiali, schema, foto) su pagine successive
 - Dettaglio documento: selettore "Modello CNA" (default) / "Modello app" per anteprima ed esportazione
 - Nuovi campi: impresa (settore, civico, albo artigiani prov/n.), DiCo (n. civico, intervento altro, uso edificio, progetto redatto da + progettista/albo, allegato materiali non normalizzati), DiRi (civico, richiesta di, impianto accertato, anno realizzazione, uso edificio, allegati relazione verifica/certificato/altro)
+- Profilo: campi separati "Titolare / legale rappresentante" (company.titolare) e "Responsabile tecnico (anche esterno)"; DiCo CNA usa il titolare come sottoscritto, DiRi usa il responsabile tecnico

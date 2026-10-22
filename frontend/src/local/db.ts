@@ -76,6 +76,7 @@ export type DocumentT = {
 
 const DEFAULT_COMPANY: CompanyT = {
   denominazione: "",
+  titolare: "",
   responsabile_tecnico: "",
   partita_iva: "",
   codice_fiscale: "",

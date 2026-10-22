@@ -150,7 +150,7 @@ export function generateCnaHtml(
     return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
     <div class="page">
       ${head("DICHIARAZIONE DI CONFORMITA’ DELL’IMPIANTO ALLA REGOLA DELL’ARTE", "Decreto Ministeriale 22 Gennaio 2008, n° 37", "Prot. n.", doc.numero, logo)}
-      <p>Il Sottoscritto ${f(c.responsabile_tecnico || c.titolare, 150)}, titolare o legale rappresentante dell’impresa ${f(c.denominazione, 200)},</p>
+      <p>Il Sottoscritto ${f(c.titolare, 150)}, titolare o legale rappresentante dell’impresa ${f(c.denominazione, 200)},</p>
       <p>operante nel settore ${f(c.settore, 140)} con sede in via ${f(c.indirizzo, 220)} n. ${f(c.civico, 50)}</p>
       <p>Comune ${f(c.comune, 200)} (prov. ${f(c.provincia, 30)}) tel. ${f(c.telefono, 110)} P.IVA ${f(c.partita_iva, 110)}.</p>
       <p>${cb(!!c.cciaa_numero)} iscritta nel registro delle ditte (DPR 07/12/1995, n° 581) della camera C.I.A.A. di ${f(c.cciaa_provincia, 110)} n. ${f(c.cciaa_numero, 90)}</p>

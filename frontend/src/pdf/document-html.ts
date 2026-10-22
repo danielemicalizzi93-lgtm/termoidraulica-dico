@@ -118,6 +118,7 @@ function anagraficaImpresa(c: AnyData): string {
     "Impresa installatrice",
     `<table>
       ${row("Denominazione", c.denominazione)}
+      ${row("Titolare / legale rappresentante", c.titolare)}
       ${row("Responsabile tecnico", c.responsabile_tecnico)}
       ${row("Partita IVA / C.F.", [c.partita_iva, c.codice_fiscale].filter(Boolean).join(" / "))}
       ${row("Sede", [c.indirizzo, c.cap, c.comune, c.provincia].filter(Boolean).join(", "))}
