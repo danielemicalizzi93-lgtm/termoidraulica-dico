@@ -4,7 +4,7 @@ import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
 
 import * as db from "@/src/local/db";
-import { saveBase64Image, toDataUri } from "@/src/local/attachments";
+import { embedFile, restoreFile, saveBase64Image, toDataUri } from "@/src/local/attachments";
 
 export type BackupPayload = db.ArchiveT & {
   app: string;
@@ -31,12 +31,15 @@ async function buildJson(): Promise<string> {
           dataUri: await toDataUri(f.uri),
         })),
       );
-      return { ...doc, data: { ...doc.data, allegati_foto: embedded } };
+      return { ...doc, data: { ...doc.data, allegati_foto: embedded, visura: await embedFile(doc.data?.visura) } };
     }),
   );
-  const company = all.company?.logo_uri
+  let company = all.company?.logo_uri
     ? { ...all.company, logo_uri: await toDataUri(all.company.logo_uri) }
     : all.company;
+  if (company) {
+    company = { ...company, durc_file: await embedFile(company.durc_file), patente_file: await embedFile(company.patente_file) };
+  }
   const payload: BackupPayload = {
     app: "dicopro",
     version: 1,
@@ -102,12 +105,15 @@ export async function applyBackup(payload: BackupPayload): Promise<void> {
           uri: f.dataUri ? await saveBase64Image(f.dataUri) : f.uri,
         })),
       );
-      return { ...doc, data: { ...doc.data, allegati_foto: restored } };
+      return { ...doc, data: { ...doc.data, allegati_foto: restored, visura: await restoreFile(doc.data?.visura) } };
     }),
   );
-  const company = payload.company?.logo_uri
+  let company = payload.company?.logo_uri
     ? { ...payload.company, logo_uri: await saveBase64Image(payload.company.logo_uri) }
     : payload.company;
+  if (company) {
+    company = { ...company, durc_file: await restoreFile(company.durc_file), patente_file: await restoreFile(company.patente_file) };
+  }
   await db.importAll({
     company,
     clients: payload.clients,

@@ -12,6 +12,8 @@ import { applyBackup, backupSummary, exportBackup, pickBackup, type BackupPayloa
 import { Button, Card, CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { ScreenHeader } from "@/src/components/header";
 import { LogoPicker } from "@/src/components/logo-picker";
+import { FileField } from "@/src/components/file-field";
+import { durcStatus } from "@/src/local/company-docs";
 import { ABILITAZIONI } from "@/src/constants/dico";
 import { usesNativeTabs } from "@/src/navigation";
 import { makeStyles, spacing, useTheme } from "@/src/theme";
@@ -40,6 +42,7 @@ export default function ProfileScreen() {
   }, [company]);
 
   const bottomChrome = usesNativeTabs ? insets.bottom : 0;
+  const durc = durcStatus(form);
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
   const toggleAbil = (key: string) => {
     const list: string[] = form.abilitazioni || [];
@@ -312,6 +315,60 @@ export default function ProfileScreen() {
           ))}
         </Card>
 
+        <Text style={styles.heading}>Documenti ditta</Text>
+        <Card>
+          <View style={styles.fields}>
+            <FileField
+              label="DURC"
+              hint="Allegato automaticamente a tutte le dichiarazioni."
+              value={form.durc_file}
+              onChange={async (f) => {
+                const next = { ...form, durc_file: f };
+                setForm(next);
+                await saveCompany.mutateAsync(next);
+              }}
+              testID="durc-pick"
+            />
+            <TextField
+              label="Scadenza DURC (GG/MM/AAAA)"
+              value={form.durc_scadenza}
+              onChangeText={(v) => set("durc_scadenza", v)}
+              placeholder="es. 30/09/2026"
+              testID="field-durc-scadenza"
+            />
+            {durc.state !== "none" ? (
+              <Text
+                testID="durc-status"
+                style={[styles.durc, { color: durc.state === "ok" ? colors.success : durc.state === "expiring" ? colors.warning : colors.error }]}
+              >
+                {durc.state === "expired"
+                  ? `DURC scaduto da ${-durc.days} giorni`
+                  : durc.state === "expiring"
+                    ? `DURC in scadenza tra ${durc.days} giorni`
+                    : `DURC valido (scade tra ${durc.days} giorni)`}
+              </Text>
+            ) : null}
+            <View style={styles.divider} />
+            <FileField
+              label="Patente a crediti"
+              hint="Allegata automaticamente a tutte le dichiarazioni."
+              value={form.patente_file}
+              onChange={async (f) => {
+                const next = { ...form, patente_file: f };
+                setForm(next);
+                await saveCompany.mutateAsync(next);
+              }}
+              testID="patente-pick"
+            />
+            <View style={styles.rowFields}>
+              <TextField label="N. patente" value={form.patente_numero} onChangeText={(v) => set("patente_numero", v)} style={{ flex: 1 } as any} testID="field-patente-numero" />
+              <View style={{ width: 110 }}>
+                <TextField label="Punteggio" value={form.patente_punteggio} onChangeText={(v) => set("patente_punteggio", v.replace(/\D/g, ""))} keyboardType="number-pad" testID="field-patente-punti" />
+              </View>
+            </View>
+          </View>
+        </Card>
+
         <Text style={styles.heading}>Dati tecnico (per DiRi)</Text>
         <Card>
           <View style={styles.fields}>
@@ -344,6 +401,8 @@ export default function ProfileScreen() {
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
   heading: { fontSize: 16, fontWeight: "700", color: colors.onSurface },
+  durc: { fontSize: 13, fontWeight: "700" },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: spacing.xs },
   privacyRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, minHeight: 48 },
   privacyText: { color: colors.brandPrimary, fontWeight: "700", fontSize: 15 },
   fields: { gap: spacing.md },

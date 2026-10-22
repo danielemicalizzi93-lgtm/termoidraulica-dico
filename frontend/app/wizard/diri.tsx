@@ -13,6 +13,8 @@ import type { AttachmentT } from "@/src/local/db";
 import { AttachmentPicker } from "@/src/components/attachment-picker";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
+import { FileField } from "@/src/components/file-field";
+import type { FileT } from "@/src/local/attachments";
 import { DIRI_ALLEGATI, DIRI_BASIS, PLANT_TYPES, USO_EDIFICIO } from "@/src/constants/dico";
 import { makeStyles, radius, spacing } from "@/src/theme";
 
@@ -58,6 +60,7 @@ export default function DiRiWizard() {
   const [richiestaDi, setRichiestaDi] = useState("");
   const [diriAllegati, setDiriAllegati] = useState<string[]>(["relazione_verifica", "certificato_requisiti"]);
   const [allegatiAltro, setAllegatiAltro] = useState("");
+  const [visura, setVisura] = useState<FileT | null>(null);
   const [foto, setFoto] = useState<AttachmentT[]>([]);
   const [luogo, setLuogo] = useState("");
   const [dataIso, setDataIso] = useState(todayISO());
@@ -97,6 +100,7 @@ export default function DiRiWizard() {
     setDiriAllegati(d.diri_allegati ?? []);
     setAllegatiAltro(d.allegati_altro ?? "");
     setFoto(d.allegati_foto ?? []);
+    setVisura(d.visura ?? null);
     setLuogo(d.luogo ?? "");
     if (d.data_dichiarazione) {
       setDataIso(d.data_dichiarazione);
@@ -150,6 +154,7 @@ export default function DiRiWizard() {
       diri_allegati: diriAllegati,
       allegati_altro: allegatiAltro,
       allegati_foto: foto,
+      visura,
       firme: existing?.data?.firme,
       luogo,
       data_dichiarazione: dataIso,
@@ -264,6 +269,15 @@ export default function DiRiWizard() {
           <SectionLabel>Note</SectionLabel>
           <TextField value={note} onChangeText={setNote} placeholder="Note aggiuntive" multiline style={styles.area} />
           <SectionLabel>Foto e scansioni</SectionLabel>
+          <SectionLabel>Visura camerale</SectionLabel>
+          <FileField
+            label="Visura camerale dell'impresa"
+            hint="Obbligatoria: senza visura la dichiarazione non può essere inviata al cliente."
+            value={visura}
+            onChange={setVisura}
+            required
+            testID="visura-pick"
+          />
           <AttachmentPicker value={foto} onChange={setFoto} />
           <SectionLabel>Luogo e data</SectionLabel>
           <TextField label="Luogo" value={luogo} onChangeText={setLuogo} testID="diri-luogo" />

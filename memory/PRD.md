@@ -114,3 +114,10 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 - Dettaglio documento: card Firme (DiCo: titolare, responsabile tecnico, ricevuta cliente; DiRi: dichiarante, committente); stampate nei box firma CNA e nel modello app; ricevuta cliente con nome e data automatici (campi 14-15-16)
 - Wizard preservano firme in modifica
 - Template kind "dico": salva/usa DiCo completa (intervento, uso, progetto, tipologie, descrizione, norme, materiali, schema, allegati) nel passo 1 e nel passo finale
+
+## Visura / DURC / Patente a crediti (Jun 2026)
+- FileField (expo-document-picker, PDF o immagini) + pickFile/shareFile in attachments.ts
+- Visura camerale per ogni dichiarazione (data.visura), obbligatoria: richiesta nel passo finale dei wizard; export bloccato in dettaglio finché manca (allegabile anche dal dettaglio)
+- Profilo > Documenti ditta: DURC (file + scadenza GG/MM/AAAA, stato valido/in scadenza 15gg/scaduto) e Patente a crediti (file + numero + punteggio)
+- PDF: immagini allegate come pagine finali, riga info patente/DURC; file PDF inviati separatamente con "Invia PDF" nel dettaglio
+- Backup include visura/DURC/patente

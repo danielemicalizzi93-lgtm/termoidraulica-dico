@@ -96,7 +96,7 @@ function head(title: string, sub: string, numLabel: string, numero: string, logo
   </div>`;
 }
 
-function annexes(d: AnyData, tipo: string): string {
+function annexes(d: AnyData, tipo: string, c: AnyData = {}): string {
   const parts: string[] = [];
   const rows = d.materiali_rows || [];
   if (rows.length) {
@@ -123,8 +123,25 @@ function annexes(d: AnyData, tipo: string): string {
       .map((x: AnyData) => `<div class="foto"><img src="${esc(x.dataUri || x.uri)}" /><div class="foto-cap">${esc(x.name || "")}</div></div>`)
       .join("")}</div>`);
   }
-  if (!parts.length) return "";
-  return `<div class="page pb">${parts.join("")}</div>`;
+  const out = parts.length ? `<div class="page pb">${parts.join("")}</div>` : "";
+  return out + companyDocsPages(d, c);
+}
+
+// Visura / DURC / Patente: info line + one page per image document.
+function companyDocsPages(d: AnyData, c: AnyData): string {
+  const info: string[] = [];
+  if (c.patente_numero) info.push(`Patente a crediti n. ${esc(c.patente_numero)}${c.patente_punteggio ? ` — punteggio ${esc(c.patente_punteggio)}` : ""}`);
+  if (c.durc_scadenza) info.push(`DURC valido fino al ${esc(c.durc_scadenza)}`);
+  const imgs: AnyData[] = d.docs_img || [];
+  if (!info.length && !imgs.length) return "";
+  const infoHtml = info.length ? `<div class="sec-title">Documenti dell'impresa</div>${info.map((x) => `<p>${x}</p>`).join("")}` : "";
+  if (!imgs.length) return `<div class="page pb">${infoHtml}</div>`;
+  return imgs
+    .map(
+      (x, i) =>
+        `<div class="page pb">${i === 0 ? infoHtml : ""}<div class="sec-title">${esc(x.label)}</div><img src="${esc(x.dataUri)}" style="width:100%;max-height:235mm;object-fit:contain" /></div>`,
+    )
+    .join("");
 }
 
 export function generateCnaHtml(
@@ -197,7 +214,7 @@ export function generateCnaHtml(
       <div style="text-align:right;margin-right:40px">Il Cliente <span class="small">(16)</span><div style="width:170px;margin-left:auto">${sig(fi.cliente, 30)}<div class="sline" style="margin-top:0"></div></div><div class="small">(firma per ricevuta)</div></div>
       <div class="foot">Confederazione Nazionale Artigianato e delle piccole medie imprese - Rev 01-2023</div>
     </div>
-    ${annexes(d, "dico")}
+    ${annexes(d, "dico", c)}
     </body></html>`;
   }
 
@@ -240,6 +257,6 @@ export function generateCnaHtml(
     <div class="warn">Avvertenze per il committente: il proprietario dell’impianto ha l’obbligo di mantenere la sicurezza e l’efficienza dell’impianto, tenendo conto delle istruzioni per l’uso e manutenzione fornite dall’installatore ed affidando i lavori esclusivamente ad imprese abilitate.</div>
     <div style="margin-top:18px;display:flex;align-items:flex-end;gap:8px"><b>Il committente</b> (firma per ricevuta) <div style="width:190px">${sig(fi.cliente, 30)}<div class="sline" style="margin-top:0"></div></div>${fi.cliente ? `<span class="small">${esc(fi.cliente.name || "")} · ${fmtDate(fi.cliente.date)}</span>` : ""}</div>
   </div>
-  ${annexes(d, "diri")}
+  ${annexes(d, "diri", c)}
   </body></html>`;
 }

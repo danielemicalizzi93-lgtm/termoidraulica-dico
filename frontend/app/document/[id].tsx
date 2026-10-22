@@ -1,12 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CaretLeft, Export, PencilSimple, Trash } from "phosphor-react-native";
+import { CaretLeft, Export, PencilSimple, ShareNetwork, Trash, Warning } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
-import { useCompany, useDeleteDocument, useDocument } from "@/src/api/hooks";
-import { toDataUri } from "@/src/local/attachments";
+import { useCompany, useDeleteDocument, useDocument, useUpdateDocument } from "@/src/api/hooks";
+import { isPdf, shareFile, toDataUri } from "@/src/local/attachments";
+import { declarationFiles, durcStatus } from "@/src/local/company-docs";
+import { FileField } from "@/src/components/file-field";
 import { Button } from "@/src/components/ui";
 import { SignaturesCard } from "@/src/components/signatures-card";
 import { INTERVENTION_TYPES, PLANT_TYPES } from "@/src/constants/dico";
@@ -28,6 +30,7 @@ export default function DocumentDetail() {
   const { data: doc, isLoading } = useDocument(id);
   const { data: company } = useCompany();
   const del = useDeleteDocument();
+  const update = useUpdateDocument();
   const [exporting, setExporting] = useState(false);
   const [html, setHtml] = useState("");
   const [model, setModel] = useState<"cna" | "app">("cna");
@@ -41,9 +44,18 @@ export default function DocumentDetail() {
         foto.map(async (f: any) => ({ ...f, dataUri: await toDataUri(f.uri) })),
       );
       const data = { ...doc.data, allegati_foto: resolved };
+      const files = declarationFiles(doc.data || {}, company || {}).filter((x) => !isPdf(x.file));
+      (data as any).docs_img = await Promise.all(files.map(async (x) => ({ label: x.label, dataUri: await toDataUri(x.file.uri) })));
       const logo = company?.logo_uri ? await toDataUri(company.logo_uri) : undefined;
       if (active) {
-        const impresa = { ...(company || {}), ...(doc.data?.impresa || {}) };
+        const cur = company || {};
+        const impresa = {
+          ...cur,
+          ...(doc.data?.impresa || {}),
+          durc_scadenza: cur.durc_scadenza,
+          patente_numero: cur.patente_numero,
+          patente_punteggio: cur.patente_punteggio,
+        };
         const gen = model === "cna" ? generateCnaHtml : generateHtml;
         setHtml(gen({ ...doc, data }, impresa, logo));
       }
@@ -63,8 +75,13 @@ export default function DocumentDetail() {
 
   const d = doc.data || {};
   const isDico = doc.tipo === "dico";
+  const files = declarationFiles(d, company || {});
+  const pdfFiles = files.filter((x) => isPdf(x.file));
+  const durc = durcStatus(company || {});
+  const canSend = !!d.visura;
 
   const onExport = async () => {
+    if (!canSend) return;
     setExporting(true);
     try {
       await exportPdf(html);
@@ -112,6 +129,47 @@ export default function DocumentDetail() {
           <Row label="Data" value={d.luogo ? `${d.luogo}` : undefined} />
         </View>
 
+        <Text style={styles.previewLabel}>Documenti allegati</Text>
+        <View style={styles.card}>
+          {!canSend ? (
+            <View style={styles.alert} testID="visura-missing">
+              <Warning color={colors.error} size={20} weight="fill" />
+              <Text style={styles.alertText}>Manca la visura camerale: allegala per poter inviare la dichiarazione al cliente.</Text>
+            </View>
+          ) : null}
+          <FileField
+            label="Visura camerale"
+            value={d.visura}
+            onChange={(f) => update.mutate({ id: doc.id, data: { ...d, visura: f } })}
+            required
+            testID="detail-visura-pick"
+          />
+          {durc.state === "expired" || durc.state === "expiring" ? (
+            <View style={styles.alert} testID="durc-alert">
+              <Warning color={durc.state === "expired" ? colors.error : colors.warning} size={20} weight="fill" />
+              <Text style={styles.alertText}>
+                {durc.state === "expired" ? `Il DURC è scaduto da ${-durc.days} giorni: aggiornalo in Profilo.` : `Il DURC scade tra ${durc.days} giorni.`}
+              </Text>
+            </View>
+          ) : null}
+          {files.map((x) => (
+            <View key={x.label} style={styles.fileRow}>
+              <Text style={styles.fileLabel}>{x.label}</Text>
+              {isPdf(x.file) ? (
+                <Pressable testID={`share-file-${x.label}`} onPress={() => shareFile(x.file)} hitSlop={8} style={styles.shareBtn}>
+                  <ShareNetwork color={colors.brandPrimary} size={18} weight="bold" />
+                  <Text style={styles.shareText}>Invia PDF</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.fileNote}>inclusa nel PDF</Text>
+              )}
+            </View>
+          ))}
+          {pdfFiles.length > 0 ? (
+            <Text style={styles.fileNote}>I file PDF si inviano separatamente, subito dopo la dichiarazione.</Text>
+          ) : null}
+        </View>
+
         <Text style={styles.previewLabel}>Firme</Text>
         <SignaturesCard doc={doc} company={company || {}} />
 
@@ -147,9 +205,10 @@ export default function DocumentDetail() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
           testID="export-pdf-button"
-          title="Esporta PDF"
+          title={canSend ? "Esporta PDF" : "Allega la visura per inviare"}
           onPress={onExport}
           loading={exporting}
+          disabled={!canSend}
           icon={<Export color={colors.onBrandPrimary} size={20} weight="bold" />}
         />
       </View>
@@ -193,6 +252,13 @@ const useStyles = makeStyles((colors) => ({
   infoLabel: { fontSize: 13, color: colors.muted },
   infoValue: { fontSize: 14, fontWeight: "600", color: colors.onSurface, flex: 1, textAlign: "right" },
   previewLabel: { fontSize: 14, fontWeight: "700", color: colors.onSurface },
+  alert: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-start", paddingVertical: spacing.xs },
+  alertText: { flex: 1, fontSize: 13, color: colors.onSurface, fontWeight: "600" },
+  fileRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 },
+  fileLabel: { fontSize: 14, fontWeight: "600", color: colors.onSurface },
+  fileNote: { fontSize: 12, color: colors.muted },
+  shareBtn: { flexDirection: "row", alignItems: "center", gap: 4, minHeight: 40 },
+  shareText: { color: colors.brandPrimary, fontWeight: "700", fontSize: 14 },
   seg: { flexDirection: "row", backgroundColor: colors.surfaceTertiary, borderRadius: radius.md, padding: 3 },
   segBtn: { flex: 1, minHeight: 40, alignItems: "center", justifyContent: "center", borderRadius: radius.sm },
   segActive: { backgroundColor: colors.brandPrimary },

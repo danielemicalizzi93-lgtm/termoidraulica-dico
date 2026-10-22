@@ -15,6 +15,8 @@ import type { AttachmentT } from "@/src/local/db";
 import { AttachmentPicker } from "@/src/components/attachment-picker";
 import { MaterialsTable, type MaterialRow } from "@/src/components/materials-table";
 import { TemplateBar } from "@/src/components/template-bar";
+import { FileField } from "@/src/components/file-field";
+import type { FileT } from "@/src/local/attachments";
 import { uid } from "@/src/local/db";
 import { CheckRow, SectionLabel, TextField } from "@/src/components/ui";
 import { WizardShell } from "@/src/components/wizard-shell";
@@ -69,6 +71,7 @@ export default function DiCoWizard() {
   const [allegati, setAllegati] = useState<string[]>(["progetto", "relazione_materiali", "schema"]);
   const [allegatiFac, setAllegatiFac] = useState("");
   const [foto, setFoto] = useState<AttachmentT[]>([]);
+  const [visura, setVisura] = useState<FileT | null>(null);
   const [luogo, setLuogo] = useState("");
   const [dataIso, setDataIso] = useState(todayISO());
   const [dateText, setDateText] = useState(fmtIT(todayISO()));
@@ -109,6 +112,7 @@ export default function DiCoWizard() {
     setAllegati(d.allegati ?? []);
     setAllegatiFac(d.allegati_facoltativi ?? "");
     setFoto(d.allegati_foto ?? []);
+    setVisura(d.visura ?? null);
     setLuogo(d.luogo ?? "");
     if (d.data_dichiarazione) {
       setDataIso(d.data_dichiarazione);
@@ -208,6 +212,7 @@ export default function DiCoWizard() {
       allegati,
       allegati_facoltativi: allegatiFac,
       allegati_foto: foto,
+      visura,
       luogo,
       data_dichiarazione: dataIso,
       firme: editing ? existing?.data?.firme : undefined,
@@ -370,6 +375,15 @@ export default function DiCoWizard() {
             ))}
           </View>
           <TextField label="Altri allegati (facoltativi)" value={allegatiFac} onChangeText={setAllegatiFac} multiline style={styles.area} />
+          <SectionLabel>Visura camerale</SectionLabel>
+          <FileField
+            label="Visura camerale dell'impresa"
+            hint="Obbligatoria: senza visura la dichiarazione non può essere inviata al cliente."
+            value={visura}
+            onChange={setVisura}
+            required
+            testID="visura-pick"
+          />
           <SectionLabel>Foto e scansioni</SectionLabel>
           <AttachmentPicker value={foto} onChange={setFoto} />
           <SectionLabel>Luogo e data</SectionLabel>

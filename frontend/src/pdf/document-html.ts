@@ -174,12 +174,31 @@ function fotoSection(d: AnyData): string {
   return `<div class="section foto-section"><div class="s-title">Allegati fotografici</div><div class="foto-grid">${imgs}</div></div>`;
 }
 
+function docsSection(d: AnyData, c: AnyData): string {
+  const info: string[] = [];
+  if (c.patente_numero) info.push(`Patente a crediti n. ${esc(c.patente_numero)}${c.patente_punteggio ? ` — punteggio ${esc(c.patente_punteggio)}` : ""}`);
+  if (c.durc_scadenza) info.push(`DURC valido fino al ${esc(c.durc_scadenza)}`);
+  const imgs: AnyData[] = d.docs_img || [];
+  if (!info.length && !imgs.length) return "";
+  const infoHtml = info.length ? `<div class="section"><div class="s-title">Documenti dell'impresa</div>${info.map((x) => `<div>${x}</div>`).join("")}</div>` : "";
+  return (
+    infoHtml +
+    imgs
+      .map(
+        (x) =>
+          `<div class="section" style="page-break-before:always"><div class="s-title">${esc(x.label)}</div><img src="${esc(x.dataUri)}" style="width:100%;max-height:240mm;object-fit:contain" /></div>`,
+      )
+      .join("")
+  );
+}
+
 export function generateHtml(
   doc: { tipo: string; numero: string; data: AnyData },
   company: AnyData,
   logoDataUri?: string,
 ): string {
   const d = doc.data || {};
+  const c = company || {};
   const logo = logoDataUri ? `<img class="logo" src="${esc(logoDataUri)}" />` : "";
   const committente = d.committente?.nome || "";
 
@@ -221,6 +240,7 @@ export function generateHtml(
       ${schemaBlock(d)}
       ${section("Allegati obbligatori", `<ul>${allegati || "<li>—</li>"}</ul>${d.allegati_facoltativi ? `<div style="margin-top:6px">Facoltativi: ${esc(d.allegati_facoltativi)}</div>` : ""}`)}
       ${fotoSection(d)}
+      ${docsSection(d, c)}
       <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>
       <div class="sign">
         <div class="box">${sigSvg(d.firme?.responsabile)}<div class="line">Il responsabile tecnico</div></div>
@@ -260,6 +280,7 @@ export function generateHtml(
     ${d.norme_tecniche ? section("Norme tecniche", `<table>${row("Norme applicate", d.norme_tecniche)}</table>`) : ""}
     ${d.note ? section("Note", `<div class="declare">${esc(d.note)}</div>`) : ""}
     ${fotoSection(d)}
+      ${docsSection(d, c)}
     <div class="place">Luogo e data: <b>${esc(d.luogo) || "__________"}, ${fmtDate(d.data_dichiarazione)}</b></div>
     <div class="sign">
       <div class="box">${d.firme?.cliente ? `${sigSvg(d.firme.cliente)}<div class="line">Il committente: ${esc(d.firme.cliente.name || "")} — ${fmtDate(d.firme.cliente.date)}</div>` : ""}</div>
