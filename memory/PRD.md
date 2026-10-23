@@ -121,3 +121,7 @@ Installatore termoidraulico / tecnico abilitato che compila dichiarazioni in can
 - Profilo > Documenti ditta: DURC (file + scadenza GG/MM/AAAA, stato valido/in scadenza 15gg/scaduto) e Patente a crediti (file + numero + punteggio)
 - PDF: immagini allegate come pagine finali, riga info patente/DURC; file PDF inviati separatamente con "Invia PDF" nel dettaglio
 - Backup include visura/DURC/patente
+
+## PDF A4 (Jun 2026)
+- printToFileAsync con width 595 / height 842 (A4, prima iOS usava Letter) + meta viewport (evita testo minuscolo su Android)
+- Font e spaziature ingranditi (CNA 12.5px, modello app 14px); DiCo CNA resta su 1 pagina + allegati

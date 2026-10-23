@@ -85,17 +85,18 @@ function section(title: string, inner: string): string {
 
 const STYLE = `
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1C1C1A; font-size: 11px; margin: 0; padding: 28px 32px; }
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1C1C1A; font-size: 14px; margin: 0; padding: 0; }
+  @page { size: A4; margin: 14mm; }
   .doc-head { border-bottom: 3px solid #0A56AC; padding-bottom: 10px; margin-bottom: 16px; }
-  .doc-head h1 { font-size: 17px; margin: 0 0 2px; color: #1C1C1A; }
-  .doc-head .law { font-size: 10px; color: #73736D; }
+  .doc-head h1 { font-size: 21px; margin: 0 0 2px; color: #1C1C1A; }
+  .doc-head .law { font-size: 12px; color: #73736D; }
   .doc-head::after { content: ""; display: block; clear: both; }
-  .doc-head .logo { float: left; max-height: 56px; max-width: 140px; margin-right: 12px; object-fit: contain; }
-  .doc-head .num { float: right; font-size: 11px; font-weight: 700; color: #0A56AC; }
-  .section { margin-bottom: 14px; }
-  .s-title { background: #E3EDF9; color: #0A56AC; font-weight: 700; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; }
+  .doc-head .logo { float: left; max-height: 70px; max-width: 170px; margin-right: 14px; object-fit: contain; }
+  .doc-head .num { float: right; font-size: 14px; font-weight: 700; color: #0A56AC; }
+  .section { margin-bottom: 18px; }
+  .s-title { background: #E3EDF9; color: #0A56AC; font-weight: 700; font-size: 12.5px; letter-spacing: .5px; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; }
   table { width: 100%; border-collapse: collapse; }
-  td { padding: 4px 6px; vertical-align: top; border-bottom: 1px solid #E3E3E0; }
+  td { padding: 6px 8px; vertical-align: top; border-bottom: 1px solid #E3E3E0; }
   td.lbl { width: 38%; color: #73736D; }
   td.val { font-weight: 600; }
   ul { margin: 4px 0; padding-left: 18px; }
@@ -103,15 +104,15 @@ const STYLE = `
   .declare { background: #F9F9F8; border: 1px solid #E3E3E0; border-radius: 6px; padding: 10px; line-height: 1.5; }
   .sign { margin-top: 28px; display: flex; justify-content: space-between; }
   .sign .box { width: 45%; text-align: center; }
-  .sign .line { border-top: 1px solid #1C1C1A; margin-top: 36px; padding-top: 4px; font-size: 10px; color: #73736D; }
+  .sign .line { border-top: 1px solid #1C1C1A; margin-top: 44px; padding-top: 4px; font-size: 12px; color: #73736D; }
   .sign svg + .line { margin-top: 0; }
-  .place { margin-top: 18px; font-size: 11px; }
+  .place { margin-top: 18px; font-size: 14px; }
   .foto-section { margin-top: 18px; }
   .foto-grid { display: flex; flex-wrap: wrap; gap: 10px; }
   .foto { width: 31%; }
   .foto img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; border: 1px solid #E3E3E0; }
-  .foto-cap { font-size: 9px; color: #73736D; margin-top: 3px; text-align: center; }
-  table.mat td { font-size: 10px; }
+  .foto-cap { font-size: 11px; color: #73736D; margin-top: 3px; text-align: center; }
+  table.mat td { font-size: 12.5px; }
   table.mat tr.mh td { background: #F0F0EE; font-weight: 700; color: #1C1C1A; }
   table.mtot { margin-top: 6px; }
   table.mtot-grand td, tr.mtot-grand td { background: #E3EDF9; font-weight: 800; color: #0A56AC; }
@@ -214,7 +215,7 @@ export function generateHtml(
         <li>controllato l'impianto ai fini della sicurezza e della funzionalità con esito positivo.</li>
       </ul>`;
 
-    return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><style>${STYLE}</style></head><body>
       <div class="doc-head">
         ${logo}
         <span class="num">N. ${esc(doc.numero)}</span>
@@ -257,7 +258,7 @@ export function generateHtml(
   const tec = d.tecnico || {};
   const declareText = `Il sottoscritto tecnico, in possesso dei requisiti di cui all'art.7, comma 6 del D.M. 37/2008, sulla base dell'esame della documentazione e/o del sopralluogo effettuato, DICHIARA la RISPONDENZA dell'impianto alla regola dell'arte, tenuto conto delle condizioni di esercizio e dell'uso cui l'impianto è destinato.`;
 
-  return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><style>${STYLE}</style></head><body>
     <div class="doc-head">
       ${logo}
       <span class="num">N. ${esc(doc.numero)}</span>

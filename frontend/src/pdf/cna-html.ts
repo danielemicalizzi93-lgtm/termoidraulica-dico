@@ -22,7 +22,7 @@ function cb(checked: boolean): string {
 }
 
 // Inline SVG of a hand-drawn signature (or empty space)
-function sig(s: AnyData | undefined, h = 34): string {
+function sig(s: AnyData | undefined, h = 28): string {
   if (!s?.paths?.length) return `<div style="height:${h}px"></div>`;
   return `<svg class="sig" viewBox="0 0 ${s.w} ${s.h}" preserveAspectRatio="xMidYMid meet" style="height:${h}px;width:100%">${s.paths
     .map((d: string) => `<path d="${esc(d)}" stroke="#0B2F5E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)
@@ -46,46 +46,46 @@ function usoRow(uso: string): string {
 }
 
 const STYLE = `
-  @page { size: A4; margin: 12mm; }
+  @page { size: A4; margin: 8mm; }
   * { box-sizing: border-box; }
-  body { font-family: Calibri, Arial, Helvetica, sans-serif; color: #000; font-size: 11px; margin: 0; }
-  .page { border: 1px solid #555; padding: 14px 20px; min-height: 271mm; position: relative; }
+  body { font-family: Calibri, Arial, Helvetica, sans-serif; color: #000; font-size: 12.5px; margin: 0; }
+  .page { border: 1px solid #555; padding: 14px 22px; min-height: 279mm; position: relative; }
   .pb { page-break-before: always; }
-  .head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
-  .head .logo { max-height: 54px; max-width: 110px; object-fit: contain; }
+  .head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .head .logo { max-height: 66px; max-width: 130px; object-fit: contain; }
   .head .titles { flex: 1; }
-  .head h1 { font-size: 15px; font-style: italic; margin: 0; font-weight: 800; }
-  .head .sub { font-size: 10.5px; margin-top: 2px; }
-  .head .prot { border: 1px solid #000; padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+  .head h1 { font-size: 18px; font-style: italic; margin: 0; font-weight: 800; }
+  .head .sub { font-size: 12.5px; margin-top: 2px; }
+  .head .prot { border: 1px solid #000; padding: 8px 10px; font-size: 14px; white-space: nowrap; }
   .diri .head h1 { font-style: normal; font-family: Arial, Helvetica, sans-serif; }
-  p, .ln { margin: 0 0 5px; line-height: 1.6; }
+  p, .ln { margin: 0 0 3px; line-height: 1.45; }
   .f { display: inline-block; border-bottom: 1px solid #000; padding: 0 4px; line-height: 1.3; font-weight: 600; color: #0B2F5E; vertical-align: bottom; }
   .fx { width: 58%; }
   .full { display: block; border-bottom: 1px solid #000; min-height: 18px; padding: 0 4px; font-weight: 600; color: #0B2F5E; margin-bottom: 6px; }
-  .cb { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; text-align: center; line-height: 11px; font-size: 11px; font-weight: 800; margin-right: 3px; vertical-align: -1px; }
+  .cb { display: inline-block; width: 14px; height: 14px; border: 1px solid #000; text-align: center; line-height: 13px; font-size: 13px; font-weight: 800; margin-right: 3px; vertical-align: -1px; }
   .opt { margin-right: 12px; white-space: nowrap; }
-  .note { font-size: 9.5px; margin: 4px 0 6px; line-height: 1.3; }
-  .center { text-align: center; font-weight: 800; font-size: 13px; margin: 6px 0 4px; }
+  .note { font-size: 11px; margin: 4px 0 6px; line-height: 1.3; }
+  .center { text-align: center; font-weight: 800; font-size: 15px; margin: 3px 0 2px; }
   .ind { margin-left: 70px; }
   .list div { margin-bottom: 2px; }
-  .h2 { font-weight: 800; font-size: 12.5px; margin: 5px 0 3px; }
+  .h2 { font-weight: 800; font-size: 14.5px; margin: 3px 0 2px; }
   .u { text-decoration: underline; font-weight: 800; margin: 10px 0 6px; }
-  .signs { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+  .signs { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4px; }
   .signbox { border: 1px solid #000; padding: 8px 14px; text-align: center; width: 36%; }
   .sign { text-align: center; width: 34%; }
-  .sline { border-top: 1px solid #000; margin-top: 24px; }
-  .small { font-size: 9.5px; }
-  .warn { font-size: 9.5px; margin-top: 8px; line-height: 1.4; }
-  .foot { position: absolute; bottom: 8px; left: 22px; font-size: 9px; color: #333; }
-  .sec-title { font-weight: 800; font-size: 13px; border-bottom: 2px solid #0A56AC; padding-bottom: 4px; margin: 0 0 10px; }
+  .sline { border-top: 1px solid #000; margin-top: 20px; }
+  .small { font-size: 11px; }
+  .warn { font-size: 11.5px; margin-top: 5px; line-height: 1.4; }
+  .foot { position: absolute; bottom: 4px; left: 22px; font-size: 10.5px; color: #333; }
+  .sec-title { font-weight: 800; font-size: 15px; border-bottom: 2px solid #0A56AC; padding-bottom: 4px; margin: 0 0 10px; }
   table.mat { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-  table.mat td { border: 1px solid #999; padding: 4px 5px; font-size: 10px; }
+  table.mat td { border: 1px solid #999; padding: 6px 7px; font-size: 12.5px; }
   table.mat tr.mh td { background: #EEF2F7; font-weight: 700; }
   table.mat tr.tot td { background: #E3EDF9; font-weight: 800; }
   .schema svg { width: 100%; height: auto; display: block; border: 1px solid #999; }
   .foto-grid { display: flex; flex-wrap: wrap; gap: 10px; }
   .foto { width: 31%; } .foto img { width: 100%; height: 150px; object-fit: cover; border: 1px solid #999; }
-  .foto-cap { font-size: 9px; text-align: center; }
+  .foto-cap { font-size: 11px; text-align: center; }
 `;
 
 function head(title: string, sub: string, numLabel: string, numero: string, logo: string): string {
@@ -173,7 +173,7 @@ export function generateCnaHtml(
       .map(([k, l]) => `<div>${cb(att.includes(k))} ${l}</div>`)
       .join("");
 
-    return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body>
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><style>${STYLE}</style></head><body>
     <div class="page">
       ${head("DICHIARAZIONE DI CONFORMITA’ DELL’IMPIANTO ALLA REGOLA DELL’ARTE", "Decreto Ministeriale 22 Gennaio 2008, n° 37", "Prot. n.", doc.numero, logo)}
       <p>Il Sottoscritto ${f(c.titolare, 150)}, titolare o legale rappresentante dell’impresa ${f(c.denominazione, 200)},</p>
@@ -211,7 +211,7 @@ export function generateCnaHtml(
       </div>
       <div class="warn"><b>AVVERTENZE PER IL COMMITTENTE:</b> il committente o proprietario è tenuto ad affidare i lavori di installazione, di trasformazione, di ampliamento e di manutenzione degli impianti ad imprese abilitate</div>
       <p style="margin-top:6px">il sottoscritto <span class="small">(14)</span> ${f(fi.cliente?.name, 220)}<br/>committente dei lavori, dichiara di aver ricevuto copia della presente, corredata degli allegati indicati in data <span class="small">(15)</span> ${f(fi.cliente ? fmtDate(fi.cliente.date) : "", 90)}</p>
-      <div style="text-align:right;margin-right:40px">Il Cliente <span class="small">(16)</span><div style="width:170px;margin-left:auto">${sig(fi.cliente, 30)}<div class="sline" style="margin-top:0"></div></div><div class="small">(firma per ricevuta)</div></div>
+      <div style="text-align:right;margin-right:40px">Il Cliente <span class="small">(16)</span><div style="width:170px;margin-left:auto">${sig(fi.cliente, 24)}<div class="sline" style="margin-top:0"></div></div><div class="small">(firma per ricevuta)</div></div>
       <div class="foot">Confederazione Nazionale Artigianato e delle piccole medie imprese - Rev 01-2023</div>
     </div>
     ${annexes(d, "dico", c)}
@@ -222,7 +222,7 @@ export function generateCnaHtml(
   const t = d.tecnico || {};
   const da: string[] = d.diri_allegati || [];
   const anno = String(d.anno_realizzazione || "").padEnd(4, " ").slice(0, 4).split("");
-  return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}</style></head><body class="diri">
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><style>${STYLE}</style></head><body class="diri">
   <div class="page">
     ${head("DICHIARAZIONE DI RISPONDENZA DELL’IMPIANTO ALLA REGOLA DELL’ARTE", "( D.M. 22 GENNAIO 2008 N.37 ART.7)", "Nr.:", doc.numero, logo)}
     <p>Il sottoscritto ${f(t.nome, 220)} in qualità di responsabile tecnico da almeno cinque anni di una impresa abilitata operante nel settore impiantistico a cui si riferisce la presente dichiarazione e attualmente responsabile tecnico dell’impresa installatrice,</p>
